@@ -2,8 +2,13 @@
 
 ### Extensions in vscode
 
+~~verilog 的 vscode 支持真是垃圾~~
 - `verilog-format`
+    - settings 打成 setting 不说，你至少给个正确的 `if else` / `else if` 的缩进吧。。。
+    - ~~也可能是我没有摸索清楚~~
+    - 直接把 verilog-format 给禁用了
 - `verilog-HDL`
+    - 一样垃圾玩意儿，不支持linting
 
 ### `eclipse` or `vivado` ?
 

@@ -1,15 +1,15 @@
 // RISCV32I CPU top module
 // port modification allowed for debugging purposes
 
-module cpu(input wire clk_in,
-           input wire rst_in,
-           input wire					 rdy_in,
-           input wire [7:0] mem_din,
-           output wire [7:0] mem_dout,
-           output wire [31:0] mem_a,
-           output wire mem_wr,
-           input wire io_buffer_full,         // 1 if uart buffer is full
-           output wire [31:0]			dbgreg_dout);
+module cpu(input wire           clk_in,
+           input wire           rst_in,
+           input wire			rdy_in,
+           input wire   [7:0]   mem_din,
+           output wire  [7:0]   mem_dout,
+           output wire  [31:0]  mem_a,
+           output wire          mem_wr,
+           input wire           io_buffer_full,// 1 if uart buffer is full
+           output wire  [31:0]  dbgreg_dout);
     
     // implementation goes h
     // Specifications:
@@ -22,20 +22,23 @@ module cpu(input wire clk_in,
     // - 0x30004 read: read clocks passed since cpu starts (in dword, 4 bytes)
     // - 0x30004 write: indicates program stop (will output '\0' through uart tx)
     
-    reg [31:0] test;
-    
-    assign mem_a    = 32'h30004;
-    assign mem_dout = 8'd233;
-    assign mem_wr   = 1'b1;
-    
+    mem_ctrl mem_ctr0(.clk_in(clk_in),
+                      .rst_in(rst_in),
+                      .rdy_in(rdy_in),
+                      .mem_din(mem_din),
+                      .mem_dout(mem_dout),
+                      .mem_a(mem_a),
+                      .mem_wr(mem_wr),
+                      .io_buffer_full(io_buffer_full));
+
     always @(posedge clk_in) begin
-        if (rst_in) begin
+        if (rst_in) begin // reset 
             
         end
-        else if (!rdy_in) begin
+        else if (!rdy_in) begin // pause the cpu
             
         end
-        else begin
+        else begin // just do it
             
         end
     end

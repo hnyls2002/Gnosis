@@ -22,50 +22,15 @@ module cpu(input wire           clk_in,
     // - 0x30004 read: read clocks passed since cpu starts (in dword, 4 bytes)
     // - 0x30004 write: indicates program stop (will output '\0' through uart tx)
     
-    // inst_fetcher -> mem_ctrl
-    wire IF_MC_ask;
-    wire MC_IF_ok;
-    wire [`Addr_SIZE] IF_MC_Addr;
-    wire [`Inst_SIZE] MC_IF_Inst;
-
-    mem_ctrl mem_ctr0(
-        .clk_in(clk_in),
-        .rst_in(rst_in),
-        .rdy_in(rdy_in),
-        .io_buffer_full(io_buffer_full),
-
-        .mem_din(mem_din),
-        .mem_dout(mem_dout),
-        .mem_a(mem_a),
-        .mem_wr(mem_wr),
-
-        .IF_MC_ask(IF_MC_ask),
-        .IF_MC_Addr(IF_MC_Addr),
-        .MC_IF_ok(MC_IF_ok),
-        .MC_IF_Inst(MC_IF_Inst)
-        );
-    
-    // inst_fetcher inst_fetcher0(
-    //     .clk_in(clk_in),
-    //     .rst_in(rst_in),
-    //     .rdy_in(rdy_in),
-    //     .io_buffer_full(io_buffer_full),
-
-    //     .IF_MC_ask(IF_MC_ask),
-    //     .IF_MC_Addr(IF_MC_Addr),
-    //     .MC_IF_ok(MC_IF_ok),
-    //     .MC_IF_Data(MC_IF_Data)
-    //     );
-
     always @(posedge clk_in) begin
         if (rst_in) begin // reset 
-            
+        $display("reset");
         end
         else if (!rdy_in) begin // pause the cpu
-            
+        $display("pause");
         end
         else begin // just do it
-            
+        $display("ohhh");
         end
     end
     

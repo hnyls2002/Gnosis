@@ -2,11 +2,42 @@
 
 程序的终止端口0x30004，如果不先进行一次memory access, 会导致`io_en`一直是`x`电位。程序无法正常终止。
 
-~~但似乎也必须要先读取指令 :clown_face: :clown_face: :clown_face: :clown_face: :clown_face:~~
+~~但似乎也必须要先读取指令~~🤡
 
-## modules design
+### 我们为什么需要时序逻辑 or 时钟周期
 
-### mem_ctrl
-Fetch ins and memory access. When conflict, `mem_ctrl` should randomly choose one to execute.
+- 消除组合逻辑运行速度不一而产生的毛刺
+- 处理器的状态需要按照流水线的方式来变化（同步），否则一些操作将无法完成，比如说pc = pc + 4
 
-**Instruction contains four bytes**, so it can't be divided. We need to specify the request so that `mem_ctrl` can handling 4/2/1 bytes memory access.
+### 组合逻辑 or 时序逻辑 ？
+- 组合逻辑块采用阻塞赋值，在综合上相当于assign，即时刻保持一个同步的关系
+- 时序逻辑由组合电路和触发器组成，相当于阻塞了寄存器的同步状态，在特定时刻（比如说上升沿posedge)进行一个同步
+- 每个周期从低电平到高电平，其中上升沿的时候会进行一个时序逻辑的同步，即将时序逻辑块运算的结果同步为当前状态（下图中Q为当前状态）。同步完后，直到下一个周期的上升沿，其余的组合逻辑电路部分有充足的时间进行运算，最终电路保持稳定。
+
+<img src="./assets/1858706-20191220212459387-1470246017.png" alt="1858706-20191220212459387-1470246017" style="zoom:40%;" />
+
+### 设计原则
+
+- 时序逻辑块尽量只负责一个同步的作用（因为pc要按照时钟来）
+- 能用组合逻辑的地方用组合逻辑
+
+### 模块设计
+
+~~感觉ppca时候写的模拟器的模块设计就还可以~~
+
+##### IF
+
+ppca里面并没有这个模块，这里的IF模块处理pc值的变化（ppca写在了ROB里面）。
+
+得到指令后需要发送给ID模块进行解码和发送，这个过程可以看做是组合的，于是IF这样设计：
+
+- 在得到指令之后，组合逻辑发送给dispatcher，dispatcher同样组合逻辑解码发送给RS/LSB，下个周期RS/LSB 开始处理新这条指令
+- 时序逻辑将pc + 4，下个周期尝试取下一条指令
+- 存在ICache
+
+##### MC
+
+- 输入地址发生变化后组合逻辑立马同步到内存接口
+- 时序逻辑检测到开始读取后，开始一个byte一个byte的读取
+- 得到内存接口的数据后，立马同步到临时寄存器（依次存储4个byte）
+- 最后一个byte需要特判

@@ -1,4 +1,0 @@
-module decoder (
-);
-    
-endmodule

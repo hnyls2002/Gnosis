@@ -22,15 +22,54 @@ module cpu(input wire           clk_in,
     // - 0x30004 read: read clocks passed since cpu starts (in dword, 4 bytes)
     // - 0x30004 write: indicates program stop (will output '\0' through uart tx)
     
+    // MC <-> IF
+    wire        IF_MC_req;
+    wire [31:0] IF_MC_addr;
+    wire        MC_IF_flag;
+    wire [31:0] MC_IF_inst;
+
+    mem_ctrl mem_ctrl0(
+        .clk(clk_in),
+        .rst(rst_in),
+        .rdy(rdy_in),
+        .io_buffer_full(io_buffer_full),
+        .mem_din(mem_din),
+        .mem_dout(mem_dout),
+        .mem_a(mem_a),
+        .mem_wr(mem_wr),
+        .inst_IF_req(IF_MC_req),
+        .inst_IF_addr(IF_MC_addr),
+        .inst_IF_flag(MC_IF_flag),
+        .inst_IF(MC_IF_inst)
+    );
+
+    assign fake_ID_stall = `False;
+    wire fake_ID_flag;
+    wire [31:0] fake_ID_inst;
+
+    inst_fetcher inst_fetcher0(
+        .clk(clk_in),
+        .rst(rst_in),
+        .rdy(rdy_in),
+        .inst_MC_flag(MC_IF_flag),
+        .inst_MC(MC_IF_inst),
+        .inst_MC_req(IF_MC_req),
+        .inst_MC_addr(IF_MC_addr),
+        .ID_stall(fake_ID_stall),
+        .inst_ID_flag(fake_ID_flag),
+        .inst_ID(fake_ID_inst)
+    );
+
+    always @(*) begin
+        $display(fake_ID_inst);
+    end
+
     always @(posedge clk_in) begin
         if (rst_in) begin // reset 
-        $display("reset");
         end
         else if (!rdy_in) begin // pause the cpu
-        $display("pause");
         end
         else begin // just do it
-        $display("ohhh");
         end
     end
     

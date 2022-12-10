@@ -26,9 +26,9 @@ initial begin
 end
 
 initial begin
-	// $dumpfile("./test/wave.vcd");
-	// $dumpvars;
-  #500 $finish;
+	$dumpfile("./test/wave.vcd");
+	$dumpvars;
+  #200 $finish;
 end
 
 endmodule

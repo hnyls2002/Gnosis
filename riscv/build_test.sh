@@ -3,8 +3,9 @@ set -e
 prefix='/opt/riscv'
 
 # clearing test dir
-rm -rf ./test
-mkdir ./test
+
+# rm -rf ./test
+# mkdir ./test
 
 # compiling rom
 riscv32-unknown-elf-as -o ./sys/rom.o -march=rv32i ./sys/rom.s

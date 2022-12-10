@@ -60,9 +60,9 @@ module cpu(input wire           clk_in,
         .inst_ID(fake_ID_inst)
     );
 
-    always @(*) begin
-        $display(fake_ID_inst);
-    end
+    // always @(*) begin
+    //     $display(fake_ID_inst);
+    // end
 
     always @(posedge clk_in) begin
         if (rst_in) begin // reset 

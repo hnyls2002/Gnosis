@@ -5,20 +5,20 @@ module inst_fetcher(
 
     // MC
     input   wire            inst_MC_flag,
-    input   wire    [`ISZ]  inst_MC,
+    input   wire    [31:0]  inst_MC,
     output  reg             inst_MC_req,
-    output  reg     [`ADSZ] inst_MC_addr,
+    output  reg     [31:0]  inst_MC_addr,
 
     // dispatcher
     input   wire            ID_stall,   // indicates if this instruction can be issued
     output  wire            inst_ID_flag,
-    output  wire    [`ISZ]  inst_ID     // instruction to be issued, the dispatcher should know its type
+    output  wire    [31:0]  inst_ID     // instruction to be issued, the dispatcher should know its type
 );
 
 reg [31:0] pc = 0;
 
 // Icache : ID 7:0
-reg [`ISZ]      cache   [`ICSZ];
+reg [31:0]      cache   [`ICSZ];
 reg [`TGSZ]     tags    [`ICSZ];
 reg [`ICSZ]     valid;
 wire            hit;
@@ -52,10 +52,7 @@ always @(posedge clk) begin
     end
     else begin
         if(inst_ID_flag) begin
-            if(pc % 16 == 0 && pc != 0)
-                pc <= pc - 12;
-            else 
-                pc <= pc + 4;
+            pc <= pc + 4;
         end
     end
 end

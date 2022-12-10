@@ -15,7 +15,7 @@ module mem_ctrl(
     input wire                  inst_IF_req,
     input wire [31:0]           inst_IF_addr,
     output reg                  inst_IF_flag, 
-    output reg [`ISZ]           inst_IF
+    output reg [31:0]           inst_IF
 
     // LSB ...
     );

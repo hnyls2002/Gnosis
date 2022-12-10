@@ -28,6 +28,10 @@ module cpu(input wire           clk_in,
     wire        MC_IF_flag;
     wire [31:0] MC_IF_inst;
 
+    wire        ID_IF_stall; 
+    wire        IF_ID_flag;  
+    wire [31:0] IF_ID_inst;
+
     mem_ctrl mem_ctrl0(
         .clk(clk_in),
         .rst(rst_in),
@@ -43,10 +47,6 @@ module cpu(input wire           clk_in,
         .inst_IF(MC_IF_inst)
     );
 
-    assign fake_ID_stall = `False;
-    wire fake_ID_flag;
-    wire [31:0] fake_ID_inst;
-
     inst_fetcher inst_fetcher0(
         .clk(clk_in),
         .rst(rst_in),
@@ -55,9 +55,15 @@ module cpu(input wire           clk_in,
         .inst_MC(MC_IF_inst),
         .inst_MC_req(IF_MC_req),
         .inst_MC_addr(IF_MC_addr),
-        .ID_stall(fake_ID_stall),
-        .inst_ID_flag(fake_ID_flag),
-        .inst_ID(fake_ID_inst)
+        .ID_stall(ID_IF_stall),
+        .inst_ID_flag(IF_ID_flag),
+        .inst_ID(IF_ID_inst)
+    );
+
+    dispatcher dispatcher0(
+        .inst_flag(IF_ID_flag),
+        .inst(IF_ID_inst),
+        .ID_stall(ID_IF_stall)
     );
 
     // always @(*) begin

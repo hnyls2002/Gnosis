@@ -4,17 +4,20 @@ module dispatcher(
     output  wire            ID_stall,
 
     // inst info
-    output reg [4:0]   rd, rs1, rs2,
-    output reg [31:0]  imm,
-    output reg [6:0]   opcode,
-    output reg [2:0]   funct3,
-    output reg [6:0]   funct7,
-    output reg [5:0]   inst_code,
-    output reg [2:0]   inst_type
+    output  wire        inst_ID_flag,
+    output reg [4:0]    rd, rs1, rs2,
+    output reg [31:0]   imm,
+    output reg [5:0]    inst_code,
+    output reg [2:0]    inst_type
 
 );
 
 assign ID_stall = `False;
+assign inst_ID_flag = inst_flag;
+
+reg [6:0]   opcode;
+reg [2:0]   funct3;
+reg [6:0]   funct7;
 
 always @(*) begin
     if(inst_flag) begin

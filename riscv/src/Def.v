@@ -1,12 +1,24 @@
+// bool
 `define True 1'b1
 `define False 1'b0
 
-`define ICSZ 255:0
-`define IDSZ 7:0
-`define TGSZ 21:0
+// cache
+`define ICSZ 256
+`define TGBW 22
 `define ID 9:2
 `define TG 31:10
 
+// RS
+`define RSSZ 32
+
+// LSB
+`define LSBSZ 32
+
+// ROB
+`define ROBSZ 32
+`define ROBIDBW 5
+
+// decoder
 `define U_TYPE0 7'b0110111
 `define U_TYPE1 7'b0010111
 `define J_TYPE  7'b1101111

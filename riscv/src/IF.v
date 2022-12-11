@@ -12,15 +12,18 @@ module inst_fetcher(
     // dispatcher
     input   wire            ID_stall,   // indicates if this instruction can be issued
     output  wire            inst_ID_flag,
-    output  wire    [31:0]  inst_ID     // instruction to be issued, the dispatcher should know its type
+    output  wire    [31:0]  inst_ID,    // instruction to be issued, the dispatcher should know its type
+
+    // broadcast pc 
+    output  wire    [31:0]  now_pc 
 );
 
 reg [31:0] pc = 0;
 
 // Icache : ID 7:0
-reg [31:0]      cache   [`ICSZ];
-reg [`TGSZ]     tags    [`ICSZ];
-reg [`ICSZ]     valid;
+reg [31:0]          cache   [`ICSZ-1:0];
+reg [`TGBW-1:0]     tags    [`ICSZ-1:0];
+reg [`ICSZ-1:0]     valid;
 wire            hit;
 assign hit  = valid[pc[`ID]] && (tags[pc[`ID]] == pc[`TG]);
 assign inst_ID_flag = hit && !ID_stall;

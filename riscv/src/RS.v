@@ -20,17 +20,17 @@ reg [`ROBIDBW-1:0]  rob_id  [`RSSZ-1:0];
 integer i;
 
 always @(*) begin
-    if(inst_ID_flag && inst_type <= `BRC) begin
-        for(i = 0; i < `RSSZ; i = i + 1) begin
-            if(!busy[i]) begin
-                busy[i]     = `True;
-                op_code[i]  = inst_code;
-                inst_pc[i]  = now_pc;
-                //TODO
-                break;
-            end
-        end
-    end
+    // if(inst_ID_flag && inst_type <= `BRC) begin
+    //     for(i = 0; i < `RSSZ; i = i + 1) begin
+    //         if(!busy[i]) begin
+    //             busy[i]     = `True;
+    //             op_code[i]  = inst_code;
+    //             inst_pc[i]  = now_pc;
+    //             //TODO
+    //             break;
+    //         end
+    //     end
+    // end
 end
 
 endmodule

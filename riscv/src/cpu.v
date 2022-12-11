@@ -28,21 +28,6 @@ module cpu(input wire           clk_in,
     wire        MC_IF_flag;
     wire [31:0] MC_IF_inst;
 
-    // IF <-> ID
-    wire        ID_IF_stall; 
-    wire        IF_ID_flag;  
-    wire [31:0] IF_ID_inst;
-
-    // IF -> 
-    wire [31:0] now_pc;
-
-    // ID ->
-    wire            inst_ID_flag;
-    wire [4:0]      rd, rs1, rs2;
-    wire [31:0]     imm;
-    wire [5:0]      inst_code;
-    wire [2:0]      inst_type;
-
     mem_ctrl mem_ctrl0(
         .clk(clk_in),
         .rst(rst_in),
@@ -56,38 +41,6 @@ module cpu(input wire           clk_in,
         .inst_IF_addr(IF_MC_addr),
         .inst_IF_flag(MC_IF_flag),
         .inst_IF(MC_IF_inst)
-    );
-
-    inst_fetcher inst_fetcher0(
-        // cpu
-        .clk(clk_in),
-        .rst(rst_in),
-        .rdy(rdy_in),
-        // mem_ctrl
-        .inst_MC_flag(MC_IF_flag),
-        .inst_MC(MC_IF_inst),
-        .inst_MC_req(IF_MC_req),
-        .inst_MC_addr(IF_MC_addr),
-        // inst_fetcher
-        .ID_stall(ID_IF_stall),
-        .inst_ID_flag(IF_ID_flag),
-        .inst_ID(IF_ID_inst),
-        // pc
-        .now_pc(now_pc)
-    );
-
-    dispatcher dispatcher0(
-        .inst_flag(IF_ID_flag),
-        .inst(IF_ID_inst),
-        .ID_stall(ID_IF_stall),
-
-        .inst_ID_flag(inst_ID_flag),
-        .rd(rd),
-        .rs1(rs1),
-        .rs2(rs2),
-        .imm(imm),
-        .inst_code(inst_code),
-        .inst_type(inst_type)
     );
 
     // always @(*) begin

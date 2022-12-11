@@ -1,10 +1,9 @@
 module dispatcher(
     input   wire            inst_flag,
     input   wire    [31:0]  inst,
-    output  wire            ID_stall,
 
     // inst info
-    output  wire        inst_ID_flag,
+    output wire         inst_ID_flag,
     output reg [4:0]    rd, rs1, rs2,
     output reg [31:0]   imm,
     output reg [5:0]    inst_code,
@@ -12,7 +11,6 @@ module dispatcher(
 
 );
 
-assign ID_stall = `False;
 assign inst_ID_flag = inst_flag;
 
 reg [6:0]   opcode;

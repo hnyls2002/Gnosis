@@ -2,6 +2,10 @@
 `define True 1'b1
 `define False 1'b0
 
+// register
+`define REGSZ 32
+`define REGBW 5
+
 // cache
 `define ICSZ 256
 `define TGBW 22
@@ -16,7 +20,7 @@
 
 // ROB
 `define ROBSZ 32
-`define ROBIDBW 5
+`define ROBBW 5
 
 // decoder
 `define U_TYPE0 7'b0110111

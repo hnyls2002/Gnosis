@@ -15,7 +15,7 @@ reg [31:0]          inst_pc [`RSSZ-1:0];
 reg [4:0]           Q1      [`RSSZ-1:0], Q2[`RSSZ-1:0];
 reg [31:0]          V1      [`RSSZ-1:0], V2[`RSSZ-1:0];
 reg [31:0]          A       [`RSSZ-1:0];
-reg [`ROBIDBW-1:0]  rob_id  [`RSSZ-1:0];
+reg [`ROBBW-1:0]    rob_id  [`RSSZ-1:0];
 
 integer i;
 

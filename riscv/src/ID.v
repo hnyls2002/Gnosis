@@ -2,127 +2,62 @@ module dispatcher(
     input   wire            inst_flag,
     input   wire    [31:0]  inst,
 
-    // inst info
-    output wire         inst_ID_flag,
-    output reg [4:0]    rd, rs1, rs2,
-    output reg [31:0]   imm,
-    output reg [5:0]    inst_code,
-    output reg [2:0]    inst_type
+    // direct decode infos
+    output  wire                inst_ID_flag,
+    output  wire [`REGBW-1:0]   inst_ID_rd,
+    output  wire [`REGBW-1:0]   inst_ID_rs1,
+    output  wire [`REGBW-1:0]   inst_ID_rs2,
+    output  wire [31:0]         inst_ID_A, 
+    output  wire [5:0]          inst_ID_code,
+    output  wire [2:0]          inst_ID_type,
 
+    // send reg id to reg_file to fetch value
+    output  wire    [`REGBW-1:0]    rs1_RF,
+    output  wire    [`REGBW-1:0]    rs2_RF,
+    input   wire    [31:0]          V1_RF,
+    input   wire    [31:0]          V2_RF,
+    input   wire    [`ROBBW-1:0]    Q1_RF,
+    input   wire    [`ROBBW-1:0]    Q2_RF,
+
+    // assign V1,V2,Q1,Q2 from RF to ID
+    output  wire [31:0]         inst_ID_V1,
+    output  wire [31:0]         inst_ID_V2,
+    output  wire [`ROBBW-1:0]   inst_ID_Q1,
+    output  wire [`ROBBW-1:0]   inst_ID_Q2,
+
+    // other infos
+    input   wire [31:0]         inst_IF_pc, 
+    input   wire [31:0]         inst_IF_jpc,
+    input   wire [`ROBBW-1:0]   inst_ROB_ava_id,
+    output  wire [31:0]         inst_ID_pc, 
+    output  wire [31:0]         inst_ID_jpc,
+    output  wire [`ROBBW-1:0]   inst_ID_rob_id
 );
 
 assign inst_ID_flag = inst_flag;
 
-reg [6:0]   opcode;
-reg [2:0]   funct3;
-reg [6:0]   funct7;
+// get inst info from decoder
+decoder decoder0(
+    .inst_flag(inst_flag),
+    .inst(inst),
+    .rd(inst_ID_rd),
+    .rs1(inst_ID_rs1),
+    .rs2(inst_ID_rs2),
+    .imm(inst_ID_A),
+    .inst_code(inst_ID_code),
+    .inst_type(inst_ID_type)
+);
 
-always @(*) begin
-    if(inst_flag) begin
-        opcode  = inst[6:0];
-        rd      = inst[11:7];
-        rs1     = inst[19:15];
-        rs2     = inst[24:20];
-        funct3  = inst[14:12];
-        funct7  = inst[31:25];
-        case (opcode)
-            `R_TYPE : begin
-                inst_type = `ALU;
-                case (funct7[5])
-                    1'b1 : begin
-                        case (funct3)
-                            3'b000 : inst_code = `SUB;
-                            3'b101 : inst_code = `SRA;
-                        endcase
-                    end
-                    1'b0 : begin
-                        case (funct3)
-                            3'b000 : inst_code = `ADD;
-                            3'b001 : inst_code = `SLL;
-                            3'b010 : inst_code = `SLT;
-                            3'b011 : inst_code = `SLTU;
-                            3'b100 : inst_code = `XOR;
-                            3'b101 : inst_code = `SRL;
-                            3'b110 : inst_code = `OR;
-                            3'b111 : inst_code = `AND;
-                        endcase
-                    end
-                endcase
-            end
-            `I_TYPE0, `I_TYPE1, `I_TYPE2 : begin
-                if(opcode == 7'b0010011 && (funct3 == 3'b001 || funct3 == 3'b101)) imm = {{27{1'b0}},inst[24:20]};
-                else imm = {{20{inst[31]}},inst[31:20]};
-                case(opcode)
-                    `I_TYPE0 : begin
-                        inst_type = `JMP;
-                        inst_code = `JALR;
-                    end
-                    `I_TYPE1 : begin
-                        inst_type = `LD;
-                        case (funct3)
-                            3'b000 : inst_code = `LB;
-                            3'b001 : inst_code = `LH;
-                            3'b010 : inst_code = `LW;
-                            3'b100 : inst_code = `LBU;
-                            3'b101 : inst_code = `LHU;
-                        endcase
-                    end
-                    `I_TYPE2 : begin
-                        inst_type = `ALU;
-                        case (funct3)
-                            3'b000 : inst_code = `ADDI;
-                            3'b010 : inst_code = `SLTI;
-                            3'b011 : inst_code = `SLTIU;
-                            3'b100 : inst_code = `XORI;
-                            3'b110 : inst_code = `ORI;
-                            3'b111 : inst_code = `ANDI;
-                            3'b001 : inst_code = `SLLI; 
-                            3'b101 : begin
-                                case (funct7[5])
-                                    1'b0 : inst_code = `SRLI;
-                                    1'b1 : inst_code = `SRAI;
-                                endcase
-                            end
-                        endcase 
-                    end
-                endcase
-            end
-            `S_TYPE : begin
-                inst_type = `ST;
-                imm = {{20{inst[31]}},inst[31:25],inst[11:7]};
-                case (funct3)
-                    3'b000 : inst_code = `SB;
-                    3'b001 : inst_code = `SH;
-                    3'b010 : inst_code = `SW;
-                endcase
-            end
-            `B_TYPE : begin
-                inst_type = `BRC;
-                imm = {{19{inst[31]}},inst[31],inst[7],inst[30:25],inst[11:8],1'b0};
-                case (funct3)
-                    3'b000 : inst_code = `BEQ;
-                    3'b001 : inst_code = `BNE;
-                    3'b100 : inst_code = `BLT;
-                    3'b101 : inst_code = `BGE;
-                    3'b110 : inst_code = `BLTU;
-                    3'b111 : inst_code = `BGEU;
-                endcase
-            end
-            `U_TYPE0, `U_TYPE1 : begin
-                inst_type = `ALU;
-                imm = {inst[31:12],{12{1'b0}}};
-                case (opcode)
-                    `U_TYPE0 : inst_code = `LUI;
-                    `U_TYPE1 : inst_code = `AUIPC;
-                endcase
-            end
-            `J_TYPE : begin
-                inst_type = `JMP;
-                imm = {{11{inst[31]}},inst[31],inst[19:12],inst[20],inst[30:21],1'b0};
-                inst_code = `JAL;
-            end
-        endcase
-    end
-end
+// fetch value from reg_file
+assign rs1_Dec = inst_ID_rs1;
+assign rs2_Dec = inst_ID_rs2;
+assign inst_ID_V1 = V1_RF;
+assign inst_ID_V2 = V2_RF;
+assign inst_ID_Q1 = Q1_RF;
+assign inst_ID_Q2 = Q2_RF;
+
+assign inst_ID_pc = inst_IF_pc;
+assign inst_ID_jpc = inst_IF_jpc;
+assign inst_ID_rob_id = inst_ROB_ava_id;
 
 endmodule

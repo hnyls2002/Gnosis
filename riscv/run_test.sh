@@ -14,8 +14,8 @@ if [ -f ./testcase/$@.ans ]; then cp ./testcase/$@.ans ./test/test.ans; fi
 # - diff ./test/test.ans ./test/test.out
 
 # compile and run
-iverilog src/Def.v src/*.v src/common/*/*.v sim/*.v -o test/a.out
-./test/a.out
+# iverilog src/Def.v src/*.v src/common/*/*.v sim/testbench.v -o test/a.out
+# ./test/a.out
 
 # dump waveform
 # vvp test/a.out

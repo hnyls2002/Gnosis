@@ -1,3 +1,6 @@
+`include "Def.v"
+`include "Dec.v"
+
 module dispatcher(
     input   wire            inst_flag,
     input   wire    [31:0]  inst,
@@ -49,8 +52,8 @@ decoder decoder0(
 );
 
 // fetch value from reg_file
-assign rs1_Dec = inst_ID_rs1;
-assign rs2_Dec = inst_ID_rs2;
+wire [`REGBW-1:0]   rs1_Dec = inst_ID_rs1;
+wire [`REGBW-1:0]   rs2_Dec = inst_ID_rs2;
 assign inst_ID_V1 = V1_RF;
 assign inst_ID_V2 = V2_RF;
 assign inst_ID_Q1 = Q1_RF;

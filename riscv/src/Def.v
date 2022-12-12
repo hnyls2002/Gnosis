@@ -14,9 +14,11 @@
 
 // RS
 `define RSSZ 32
+`define RSBW 5
 
 // LSB
 `define LSBSZ 32
+`define LSBBW 5
 
 // ROB
 `define ROBSZ 32

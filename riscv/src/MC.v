@@ -1,3 +1,5 @@
+`include "Def.v"
+
 module mem_ctrl(
     // cpu
     input wire                  clk,
@@ -27,18 +29,17 @@ module mem_ctrl(
 
     always @(*) begin
         if(inst_IF_req) begin // req during 0,1,2,3
-            mem_a = inst_IF_addr + step_IF;
+            mem_a = inst_IF_addr + {{30{1'b0}},step_IF};
             case (step_IF)
                 2'b01 : mem_res[7:0] = mem_din;
                 2'b10 : mem_res[15:8] = mem_din;
                 2'b11 : mem_res[23:16] = mem_din;
+                default :;
             endcase
         end
         if(last_IF) begin // next 0, receive 3's result
             mem_res[31:24] = mem_din;
-            inst_IF_flag = `True;
             inst_IF = mem_res;
-            last_IF = `False;
         end
     end
 
@@ -48,11 +49,16 @@ module mem_ctrl(
         else if (!rdy) begin // pause
         end
         else begin
-            inst_IF_flag <= `False;
             if(inst_IF_req) begin
                 step_IF <= step_IF + 2'b01;
-                if(step_IF == 2'b11)
+                if(step_IF == 2'b11) begin
                     last_IF <= `True;
+                    inst_IF_flag <= `True;
+                end
+                else begin
+                    last_IF <= `False;
+                    inst_IF_flag <= `False;
+                end
             end
         end
     end

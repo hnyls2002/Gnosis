@@ -1,3 +1,5 @@
+`include "Def.v"
+
 module inst_fetcher(
     input wire  clk,
     input wire  rst,
@@ -10,9 +12,9 @@ module inst_fetcher(
     output  reg     [31:0]  inst_MC_addr,
 
     // stalls
-    input   wire            RS_nex_full,
-    input   wire            LSB_nex_full, 
-    input   wire            ROB_nex_full, 
+    input   wire            RS_nex_ava,
+    input   wire            LSB_nex_ava, 
+    input   wire            ROB_nex_ava, 
 
     // dispatcher
     output  reg             inst_ID_flag,
@@ -26,17 +28,12 @@ reg [31:0] pc = 0;
 reg [31:0]          cache   [`ICSZ-1:0];
 reg [`TGBW-1:0]     tags    [`ICSZ-1:0];
 reg [`ICSZ-1:0]     valid;
-wire        hit = valid[pc[`ID]] && (tags[pc[`ID]] == pc[`TG]);
-wire [31:0] inst_hit = cache[pc[`ID]];
+
+wire hit = valid[pc[`ID]] && (tags[pc[`ID]] == pc[`TG]);
+wire [31:0] inst_now = hit ? cache[pc[`ID]] : inst_MC;
 
 // add to cache
 always @(*) begin
-    if(inst_MC_flag) begin
-        valid[pc[`ID]] = `True;
-        tags[pc[`ID]] = pc[`TG];
-        cache[pc[`ID]] = inst_MC;
-    end
-
     if(!hit) begin
         inst_MC_req = `True;
         inst_MC_addr = pc;
@@ -52,8 +49,8 @@ end
 reg [6:0]   opcode;
 reg [2:0]   inst_type;
 always @(*) begin
-    if(inst_MC_flag) begin
-        opcode = inst_MC[6:0];
+    if(hit || inst_MC_flag) begin
+        opcode = inst_now[6:0];
         case (opcode)
             `R_TYPE     : inst_type = `ALU;
             `I_TYPE0    : inst_type = `JMP; 
@@ -64,6 +61,7 @@ always @(*) begin
             `U_TYPE0    : inst_type = `ALU;
             `U_TYPE1    : inst_type = `ALU;
             `J_TYPE     : inst_type = `JMP;
+            default     :;
         endcase
     end
 end
@@ -75,15 +73,15 @@ always @(posedge clk) begin
     else if(!rdy) begin
     end
     else begin
-        inst_ID_flag <= `False;
-        if(hit && !ROB_nex_full) begin
-            if((inst_type <= `BRC && !RS_nex_full) || (inst_type >= `LD && !LSB_nex_full)) begin
+        if((hit || inst_MC_flag) && ROB_nex_ava) begin
+            if((inst_type <= `BRC && RS_nex_ava) || (inst_type >= `LD && LSB_nex_ava)) begin
                 inst_ID_flag <= `True;
-                inst_ID <= inst_hit;
+                inst_ID <= inst_now;
                 inst_pc <= pc;
                 pc <= pc + 4;
             end
         end
+        else inst_ID_flag <= `False;
     end
 end
 

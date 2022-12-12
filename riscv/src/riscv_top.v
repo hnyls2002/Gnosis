@@ -153,7 +153,7 @@ assign led = hci_active;
 assign cpu_rdy		= (hci_active) ? 1'b0			 : 1'b1;
 
 // Mux cpumc signals from cpu or hci blk, depending on debug break state (hci_active).
-assign cpumc_a      = (hci_active) ? hci_ram_a		 : cpu_ram_a;
+assign cpumc_a      = (hci_active) ? {{15{1'b0}},hci_ram_a}		 : cpu_ram_a;
 assign cpumc_wr		= (hci_active) ? hci_ram_wr      : cpu_ram_wr;
 assign cpumc_din    = (hci_active) ? hci_ram_dout    : cpu_ram_dout;
 

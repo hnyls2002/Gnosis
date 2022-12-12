@@ -26,7 +26,7 @@ initial begin
 end
 
 initial begin
-	$dumpfile("./test/wave.vcd");
+	$dumpfile("../test/wave.vcd");
 	$dumpvars;
   #200 $finish;
 end

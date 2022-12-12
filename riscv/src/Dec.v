@@ -1,3 +1,5 @@
+`include "Def.v"
+
 module decoder(
     input   wire            inst_flag,
     input   wire    [31:0]  inst,
@@ -9,9 +11,9 @@ module decoder(
     output  reg     [2:0]   inst_type
 );
 
-wire [6:0]  opcode = inst[6:0];
 wire [2:0]  funct3 = inst[14:12];
 wire [6:0]  funct7 = inst[31:25];
+wire [6:0]  opcode = inst[6:0];
 assign      rd     = inst[11:7];
 assign      rs1    = inst[19:15];
 assign      rs2    = inst[24:20];
@@ -26,6 +28,7 @@ always @(*) begin
                         case (funct3)
                             3'b000 : inst_code = `SUB;
                             3'b101 : inst_code = `SRA;
+                            default:;
                         endcase
                     end
                     1'b0 : begin
@@ -58,6 +61,7 @@ always @(*) begin
                             3'b010 : inst_code = `LW;
                             3'b100 : inst_code = `LBU;
                             3'b101 : inst_code = `LHU;
+                            default:;
                         endcase
                     end
                     `I_TYPE2 : begin
@@ -78,6 +82,7 @@ always @(*) begin
                             end
                         endcase 
                     end
+                    default:;
                 endcase
             end
             `S_TYPE : begin
@@ -87,6 +92,7 @@ always @(*) begin
                     3'b000 : inst_code = `SB;
                     3'b001 : inst_code = `SH;
                     3'b010 : inst_code = `SW;
+                    default:;
                 endcase
             end
             `B_TYPE : begin
@@ -99,6 +105,7 @@ always @(*) begin
                     3'b101 : inst_code = `BGE;
                     3'b110 : inst_code = `BLTU;
                     3'b111 : inst_code = `BGEU;
+                    default:;
                 endcase
             end
             `U_TYPE0, `U_TYPE1 : begin
@@ -107,6 +114,7 @@ always @(*) begin
                 case (opcode)
                     `U_TYPE0 : inst_code = `LUI;
                     `U_TYPE1 : inst_code = `AUIPC;
+                    default  :;
                 endcase
             end
             `J_TYPE : begin
@@ -114,6 +122,7 @@ always @(*) begin
                 imm = {{11{inst[31]}},inst[31],inst[19:12],inst[20],inst[30:21],1'b0};
                 inst_code = `JAL;
             end
+            default:;
         endcase
     end
 end

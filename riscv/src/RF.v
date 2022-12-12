@@ -1,3 +1,5 @@
+`include "Def.v"
+
 module reg_file(
     // cpu
     input  wire    clk,
@@ -23,13 +25,21 @@ module reg_file(
     // ROB commits
     input   wire                flag_ROB,
     input   wire [`REGBW-1:0]   rd_ROB, 
-    input   wire [31:0]         id_ROB,
+    input   wire [`ROBBW-1:0]   id_ROB,
     input   wire [31:0]         val_ROB,
 
     // instruction rename
     input   wire                flag_rename,
-    input   wire                rd_rename,
-    input   wire [`ROBBW-1:0]   id_rename
+    input   wire [`REGBW-1:0]   rd_rename,
+    input   wire [`ROBBW-1:0]   id_rename,
+
+    // cdb 
+    input wire                  ex_cdb_flag,
+    input wire [`ROBBW-1:0]     ex_cdb_rob_id,
+    input wire [31:0]           ex_cdb_val,
+    input wire                  ld_cdb_flag,
+    input wire [`ROBBW-1:0]     ld_cdb_rob_id,
+    input wire [31:0]           ld_cdb_val
 );
 
 reg [31:0]          reg_val [`REGSZ-1:0];
@@ -39,33 +49,23 @@ assign id1 = rob_id[rs1];
 assign id2 = rob_id[rs2];
 
 always @(*) begin
-    if(id1 == 0) begin
-        V1 = reg_val[rs1];
-        Q1 = 0;
-    end
+    V1 = 0;
+    V2 = 0;
+    Q1 = 0;
+    Q2 = 0;
+    if(id1 == 0) V1 = reg_val[rs1];
     else begin
-        if(id1_ready) begin
-            V1 = id1_val;
-            Q1 = 0;
-        end
-        else begin
-            V1 = 0;
-            Q1 = id1;
-        end
+        if(id1_ready) V1 = id1_val;
+        else if(ex_cdb_flag && id1 == ex_cdb_rob_id) V1 = ex_cdb_val;
+        else if(ld_cdb_flag && id1 == ld_cdb_rob_id) V1 = ld_cdb_val;
+        else Q1 = id1;
     end
-    if(id2 == 0) begin
-        V2 = reg_val[rs2];
-        Q2 = 0;
-    end
+    if(id2 == 0) V2 = reg_val[rs2];
     else begin
-        if(id2_ready) begin
-            V2 = id2_val;
-            Q2 = 0;
-        end
-        else begin
-            V2 = 0;
-            Q2 = id2;
-        end
+        if(id2_ready) V2 = id2_val;
+        else if(ex_cdb_flag && id2 == ex_cdb_rob_id) V2 = ex_cdb_val;
+        else if(ld_cdb_flag && id2 == ld_cdb_rob_id) V2 = ld_cdb_val;
+        else Q2 = id2;
     end
 end
 

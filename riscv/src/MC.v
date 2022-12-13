@@ -27,14 +27,10 @@ module mem_ctrl(
     input wire [31:0]           LSB_val,
     input wire [`ROBBW-1:0]     LSB_rob_id,
 
-    // ld cdb 
-    output reg                  ld_cdb_flag,
-    output reg [`ROBBW-1:0]     ld_cdb_rob_id,
-    output reg [31:0]           ld_cdb_val,
-
-    // for commit store
-    output reg                  st_done_flag,
-    output reg [`ROBBW-1:0]     st_done_rob_id
+    // lsb done
+    output reg                  lsb_done_flag,
+    output reg                  lsb_done_id,
+    output reg [31:0]           lsb_done_val
     );
 
     reg         last_IF = `False; 
@@ -77,7 +73,7 @@ module mem_ctrl(
 
         if(last_ld) begin
             mem_res[31:24] = mem_din;
-            ld_cdb_val = mem_res;
+            lsb_done_val = mem_res;
         end
 
         if(last_IF) begin // next 0, receive 3's result
@@ -95,8 +91,7 @@ module mem_ctrl(
             last_IF <= `False;
             last_ld <= `False;
             inst_IF_flag <= `False;
-            ld_cdb_flag <= `False;
-            st_done_flag <= `False;
+            lsb_done_flag <= `False;
 
             if(LSB_req && (!inst_IF_req || step_IF == 0)) begin
                 step_LS <= step_LS + 2'b01;
@@ -104,11 +99,9 @@ module mem_ctrl(
                 || (LSB_width == 2'b1 && step_LS == 2'b1)
                 || (LSB_width == 2'b10 && step_LS == 2'b11))begin 
                     step_LS <= 2'b00;
-                    if(LSB_type == 1'b0) begin
+                    lsb_done_flag <= `True;
+                    if(LSB_type == 1'b0)
                         last_ld <= `True;
-                        ld_cdb_flag <= `True;
-                    end
-                    else st_done_flag <= `True;
                 end
             end
             else if(inst_IF_req) begin

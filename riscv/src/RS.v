@@ -53,24 +53,25 @@ reg [`RSBW-1:0]     rs_ava_id;
 reg [`RSBW-1:0]     rs_rdy_id;
 reg                 rs_ava_2; // has two or more available
 
-assign RS_nex_ava = rs_rdy_flag || rs_ava_2 || (rs_ava_flag && !inst_ID_flag);
+wire issue_RS_flag = inst_ID_flag && inst_ID_type <= `BRC;
+assign RS_nex_ava = rs_rdy_flag || rs_ava_2 || (rs_ava_flag && !issue_RS_flag);
 
 // find available and find_ready
 always @(*) begin
     rs_ava_flag = `False;
     rs_rdy_flag = `False;
     rs_ava_2    = `False;
-    for(i = `RSSZ-1; i >= 0; --i)
+    for(i = `RSSZ-1; i >= 0; i = i - 1)
         if(!busy[i])begin
             if(rs_ava_flag == `True)
                 rs_ava_2 = `True;
             rs_ava_flag = `True;
-            rs_ava_id = i[4:0];
+            rs_ava_id = i[`RSBW-1:0];
         end
-    for(i = `RSSZ-1; i >= 0; --i)
+    for(i = `RSSZ-1; i >= 0; i = i - 1)
         if(busy[i] && Q1[i] == 0 && Q2[i] == 0) begin
             rs_rdy_flag = `True;
-            rs_rdy_id = i[4:0];
+            rs_rdy_id = i[`RSBW-1:0];
         end
 end
 
@@ -103,7 +104,7 @@ always @(posedge clk) begin
     end
 
     // insert new
-    if(inst_ID_flag && inst_ID_type <= `BRC) begin
+    if(issue_RS_flag) begin
         busy        [rs_ava_id] <= `True;
         inst_code   [rs_ava_id] <= inst_ID_code;
         inst_pc     [rs_ava_id] <= inst_ID_pc;

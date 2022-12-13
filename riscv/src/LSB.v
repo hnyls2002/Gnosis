@@ -33,18 +33,20 @@ module ls_buffer(
     output reg [`ROBBW-1:0]     lsb_req_rob_id,
 
     // CDB to update
-    input wire              ex_cdb_flag,
-    input wire [`ROBBW-1:0] ex_cdb_rob_id,
-    input wire [31:0]       ex_cdb_val,
-
-    // receive ld data from mem_ctrl
+    input wire                  ex_cdb_flag,
+    input wire [`ROBBW-1:0]     ex_cdb_rob_id,
+    input wire [31:0]           ex_cdb_val,
     input  wire [`ROBBW-1:0]    ld_cdb_rob_id,
     input  wire                 ld_cdb_flag,
     input  wire [31:0]          ld_cdb_val,
 
     // commit store
     input wire                  st_cmt_flag,
-    input wire [`ROBBW-1:0]     st_cmt_rob_id
+    input wire [`ROBBW-1:0]     st_cmt_rob_id,
+
+    // two register calc done, send to ROB
+    output reg                  st_rdy_flag,
+    output reg [`ROBBW-1:0]     st_rdy_rob_id
 );
 
 reg [`LSBSZ-1:0]    busy;
@@ -55,22 +57,37 @@ reg [31:0]          V1[`LSBSZ-1:0], V2[`LSBSZ-1:0];
 reg [`ROBBW-1:0]    Q1[`LSBSZ-1:0], Q2[`LSBSZ-1:0];
 reg [31:0]          A[`LSBSZ-1:0];
 reg [`LSBSZ-1:0]    cmt_done;
+reg [`LSBSZ-1:0]    rob_know_store_rdy; // if ture, then ROB knows this store is ready
 
 integer i,head = 1, tail = 0;
 wire [`LSBBW-1:0] hd = head[`LSBBW-1:0];
 wire [`LSBBW-1:0] tl = tail[`LSBBW-1:0];
-wire [`LSBBW-1:0] ed = tl + 5'b1;
+wire [`LSBBW-1:0] nt = tl + 1;
 
 reg lsb_rdy_flag;
 
 wire issue_LSB_flag = inst_ID_flag && inst_ID_type >= `LD;
-assign LSB_nex_ava = lsb_rdy_flag || (tail - head + 1 <= 30) || (tail - head == 30 && !issue_LSB_flag);
+assign LSB_nex_ava = lsb_done_flag || (tail - head + 1 <= `LSBSZ - 2) || (tail - head == `LSBSZ -2  && !issue_LSB_flag);
+
+reg                 store_can_be_knew;
+reg [`LSBBW-1:0]    store_can_be_knew_lsb_id;
 
 always @(*) begin
+    // check the head is ready
     if(tail >= head) begin
         if(inst_type[hd] == `LD && Q1[hd] == 0) lsb_rdy_flag = `True;
         else if(inst_type[hd] == `ST && cmt_done[hd]) lsb_rdy_flag = `True;
         else lsb_rdy_flag = `False;
+    end
+
+    // find store can be knew
+    store_can_be_knew = `False;
+    for(i = 0; i < `LSBSZ; i = i + 1) begin
+        if(busy[i] && !rob_know_store_rdy[i] && inst_type[i] == `ST && Q1[i] == 0 && Q2[i] == 0) begin
+            store_can_be_knew = `True;
+            store_can_be_knew_lsb_id = i[`LSBBW-1:0];
+            break;
+        end
     end
 end
 
@@ -102,18 +119,30 @@ always @(posedge clk) begin
         end
     end
 
+    // send store can be knew to ROB
+    if(store_can_be_knew) begin
+        st_rdy_flag <= `True;
+        st_rdy_rob_id <= inst_rob_id[store_can_be_knew_lsb_id];
+        rob_know_store_rdy[store_can_be_knew_lsb_id] <= `True;
+    end
+    else begin
+        st_rdy_flag <= `False;
+        st_rdy_rob_id <= 0;
+    end
+
     // push inst
     if(issue_LSB_flag) begin
-        busy[ed] <= `True;
-        inst_code[ed] <= inst_ID_code;
-        inst_type[ed] <= inst_ID_type;
-        inst_rob_id[ed] <= inst_ID_rob_id;
-        V1[ed] <= inst_ID_V1;
-        V2[ed] <= inst_ID_V2;
-        Q1[ed] <= inst_ID_Q1;
-        Q2[ed] <= inst_ID_Q2;
-        A[ed] <= inst_ID_A;
-        cmt_done[ed] <= `False;
+        busy[nt] <= `True;
+        inst_code[nt] <= inst_ID_code;
+        inst_type[nt] <= inst_ID_type;
+        inst_rob_id[nt] <= inst_ID_rob_id;
+        V1[nt] <= inst_ID_V1;
+        V2[nt] <= inst_ID_V2;
+        Q1[nt] <= inst_ID_Q1;
+        Q2[nt] <= inst_ID_Q2;
+        A[nt] <= inst_ID_A;
+        cmt_done[nt] <= `False;
+        rob_know_store_rdy[nt] <= `False;
         tail <= tail + 1;
     end
 

@@ -11,65 +11,78 @@ module alu(
     input wire [`ROBBW-1:0] inst_rob_id,
 
     // result
+
     output wire                 ex_cdb_flag, 
     output wire [`ROBBW-1:0]    ex_cdb_rob_id,
-    output reg  [31:0]          res,
-    output reg  [31:0]          rel_pc
+    output reg  [31:0]          ex_cdb_val,
+    output reg  [31:0]          ex_cdb_rel_pc
 );
 
 always @(*) begin
     case(inst_code)
-        `ADD    : res = V1 + V2;
-        `ADDI   : res = V1 + A; 
-        `SUB    : res = V1 - V2;
-        `LUI    : res = A;
-        `AUIPC  : res = inst_pc + A;
-        `XOR    : res = V1 ^ V2;
-        `XORI   : res = V1 ^ A;
-        `OR     : res = V1 | V2;
-        `ORI    : res = V1 | A;
-        `AND    : res = V1 & V2;
-        `ANDI   : res = V1 & A;
-        `SLL    : res = V1 << V2[4:0];
-        `SLLI   : res = V1 << A[4:0];
-        `SRL    : res = V1 >> V2[4:0];
-        `SRLI   : res = V1 >> A[4:0];
-        `SRA    : res = $signed(V1) >> V2[4:0];
-        `SRAI   : res = $signed(V1) >> A[4:0];
-        `SLT    : res = {{31{1'b0}},$signed(V1) < $signed(V2)};
-        `SLTI   : res = {{31{1'b0}},$signed(V1) < $signed(A)};
-        `SLTU   : res = {{31{1'b0}},V1 < V2};
-        `SLTIU  : res = {{31{1'b0}},V1 < A};
+        `ADD    : ex_cdb_val = V1 + V2;
+        `ADDI   : ex_cdb_val = V1 + A; 
+        `SUB    : ex_cdb_val = V1 - V2;
+        `LUI    : ex_cdb_val = A;
+        `AUIPC  : ex_cdb_val = inst_pc + A;
+        `XOR    : ex_cdb_val = V1 ^ V2;
+        `XORI   : ex_cdb_val = V1 ^ A;
+        `OR     : ex_cdb_val = V1 | V2;
+        `ORI    : ex_cdb_val = V1 | A;
+        `AND    : ex_cdb_val = V1 & V2;
+        `ANDI   : ex_cdb_val = V1 & A;
+        `SLL    : ex_cdb_val = V1 << V2[4:0];
+        `SLLI   : ex_cdb_val = V1 << A[4:0];
+        `SRL    : ex_cdb_val = V1 >> V2[4:0];
+        `SRLI   : ex_cdb_val = V1 >> A[4:0];
+        `SRA    : ex_cdb_val = $signed(V1) >> V2[4:0];
+        `SRAI   : ex_cdb_val = $signed(V1) >> A[4:0];
+        `SLT    : ex_cdb_val = {{31{1'b0}},$signed(V1) < $signed(V2)};
+        `SLTI   : ex_cdb_val = {{31{1'b0}},$signed(V1) < $signed(A)};
+        `SLTU   : ex_cdb_val = {{31{1'b0}},V1 < V2};
+        `SLTIU  : ex_cdb_val = {{31{1'b0}},V1 < A};
         `BEQ    : begin
-            if(V1 == V2) rel_pc = inst_pc + A;
-            else rel_pc = inst_pc + 4;
+            if(V1 == V2) 
+                ex_cdb_rel_pc = inst_pc + A;
+            else 
+                ex_cdb_rel_pc = inst_pc + 4;
         end
         `BNE    : begin
-            if(V1 != V2) rel_pc = inst_pc + A;
-            else rel_pc = inst_pc + 4;
+            if(V1 != V2) 
+                ex_cdb_rel_pc = inst_pc + A;
+            else 
+                ex_cdb_rel_pc = inst_pc + 4;
         end
         `BLT    : begin
-            if($signed(V1) < $signed(V2)) rel_pc = inst_pc + A;
-            else rel_pc = inst_pc + 4;
+            if($signed(V1) < $signed(V2)) 
+                ex_cdb_rel_pc = inst_pc + A;
+            else 
+                ex_cdb_rel_pc = inst_pc + 4;
         end
         `BGE    : begin
-            if($signed(V1) >= $signed(V2)) rel_pc = inst_pc + A;
-            else rel_pc = inst_pc + 4;
+            if($signed(V1) >= $signed(V2)) 
+                ex_cdb_rel_pc = inst_pc + A;
+            else 
+                ex_cdb_rel_pc = inst_pc + 4;
         end
         `BLTU   : begin
-            if(V1 < V2) rel_pc = inst_pc + A;
-            else rel_pc = inst_pc + 4;
+            if(V1 < V2) 
+                ex_cdb_rel_pc = inst_pc + A;
+            else 
+                ex_cdb_rel_pc = inst_pc + 4;
         end
         `BGEU   : begin
-            if(V1 >= V2) rel_pc = inst_pc + A;
-            else rel_pc = inst_pc + 4;
+            if(V1 >= V2) 
+                ex_cdb_rel_pc = inst_pc + A;
+            else 
+                ex_cdb_rel_pc = inst_pc + 4;
         end
-        `JAL    : res = inst_pc + 4;
+        `JAL    : ex_cdb_val = inst_pc + 4;
         `JALR   : begin
-            res = inst_pc + 4;
-            rel_pc = (V1 + A) & (~32'b1);
+            ex_cdb_val = inst_pc + 4;
+            ex_cdb_rel_pc = (V1 + A) & (~32'b1);
         end
-        default : res = 32'b0;
+        default : ex_cdb_val = 32'b0;
     endcase
 end
 

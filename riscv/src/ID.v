@@ -5,34 +5,34 @@ module dispatcher(
     input   wire    [31:0]      inst,
 
     // direct decode infos
-    output  reg                 inst_ID_flag,
+    output  wire                inst_ID_flag,
     output  reg [`REGBW-1:0]    inst_ID_rd,
     output  reg [`REGBW-1:0]    inst_ID_rs1,
     output  reg [`REGBW-1:0]    inst_ID_rs2,
     output  reg [31:0]          inst_ID_A, 
     output  reg [5:0]           inst_ID_code,
-    output  reg [2:0]           inst_ID_type,
+    output  reg [2:0]           inst_ID_type
 
-    // send reg id to reg_file to fetch value
-    input   wire    [31:0]          V1_RF,
-    input   wire    [31:0]          V2_RF,
-    input   wire    [`ROBBW-1:0]    Q1_RF,
-    input   wire    [`ROBBW-1:0]    Q2_RF,
+    // // send reg id to reg_file to fetch value
+    // input   wire    [31:0]          V1_RF,
+    // input   wire    [31:0]          V2_RF,
+    // input   wire    [`ROBBW-1:0]    Q1_RF,
+    // input   wire    [`ROBBW-1:0]    Q2_RF,
 
-    // assign V1,V2,Q1,Q2 from RF to ID
-    output  wire [31:0]         inst_ID_V1,
-    output  wire [31:0]         inst_ID_V2,
-    output  wire [`ROBBW-1:0]   inst_ID_Q1,
-    output  wire [`ROBBW-1:0]   inst_ID_Q2,
+    // // assign V1,V2,Q1,Q2 from RF to ID
+    // output  wire [31:0]         inst_ID_V1,
+    // output  wire [31:0]         inst_ID_V2,
+    // output  wire [`ROBBW-1:0]   inst_ID_Q1,
+    // output  wire [`ROBBW-1:0]   inst_ID_Q2,
 
-    // other infos
-    input   wire [31:0]         inst_IF_pc, 
-    input   wire [31:0]         inst_IF_prd_pc,
-    input   wire [`ROBBW-1:0]   inst_ROB_ava_id,
+    // // other infos
+    // input   wire [31:0]         inst_IF_pc, 
+    // input   wire [31:0]         inst_IF_prd_pc,
+    // input   wire [`ROBBW-1:0]   inst_ROB_ava_id,
 
-    output  wire [31:0]         inst_ID_pc, 
-    output  wire [31:0]         inst_ID_prd_pc,
-    output  wire [`ROBBW-1:0]   inst_ID_rob_id
+    // output  wire [31:0]         inst_ID_pc, 
+    // output  wire [31:0]         inst_ID_prd_pc,
+    // output  wire [`ROBBW-1:0]   inst_ID_rob_id
 );
 
 assign inst_ID_flag = inst_flag;
@@ -165,15 +165,15 @@ always @(*) begin
     end
 end
 
-// fetch value from reg_file
-assign inst_ID_V1 = V1_RF;
-assign inst_ID_V2 = V2_RF;
-assign inst_ID_Q1 = Q1_RF;
-assign inst_ID_Q2 = Q2_RF;
+// // fetch value from reg_file
+// assign inst_ID_V1 = V1_RF;
+// assign inst_ID_V2 = V2_RF;
+// assign inst_ID_Q1 = Q1_RF;
+// assign inst_ID_Q2 = Q2_RF;
 
-// fetch info from IF and ROB
-assign inst_ID_pc = inst_IF_pc;
-assign inst_ID_prd_pc = inst_IF_prd_pc;
-assign inst_ID_rob_id = inst_ROB_ava_id;
+// // fetch info from IF and ROB
+// assign inst_ID_pc = inst_IF_pc;
+// assign inst_ID_prd_pc = inst_IF_prd_pc;
+// assign inst_ID_rob_id = inst_ROB_ava_id;
 
 endmodule

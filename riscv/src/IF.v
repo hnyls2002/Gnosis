@@ -5,6 +5,10 @@ module inst_fetcher(
     input wire  rst,
     input wire  rdy,
 
+    // jump wrong
+    input   wire            jump_wrong,
+    input   wire    [31:0]  jump_rel_pc,
+
     // MC
     input   wire            inst_MC_flag,
     input   wire    [31:0]  inst_MC,
@@ -19,7 +23,8 @@ module inst_fetcher(
     // dispatcher
     output  reg             inst_ID_flag,
     output  reg     [31:0]  inst_ID,
-    output  reg     [31:0]  inst_pc
+    output  reg     [31:0]  inst_pc,
+    output  reg     [31:0]  inst_prd_pc
 );
 
 reg [31:0] pc = 0;
@@ -46,11 +51,12 @@ end
 
 
 // determine this instruction's type
-reg [6:0]   opcode;
+wire [6:0] opcode = inst_now[6:0];
+wire [31:0] imm = {{11{inst_now[31]}},inst_now[31],inst_now[19:12],inst_now[20],inst_now[30:21],1'b0};
 reg [2:0]   inst_type;
+
 always @(*) begin
     if(hit || inst_MC_flag) begin
-        opcode = inst_now[6:0];
         case (opcode)
             `R_TYPE     : inst_type = `ALU;
             `I_TYPE0    : inst_type = `JMP; 
@@ -69,16 +75,28 @@ end
 always @(posedge clk) begin
     if(rst) begin
         valid <= 0;
+        pc <= 0;
     end
     else if(!rdy) begin
+    end
+    else if (jump_wrong) begin
+        pc <= jump_rel_pc;
     end
     else begin
         if((hit || inst_MC_flag) && ROB_nex_ava) begin
             if((inst_type <= `BRC && RS_nex_ava) || (inst_type >= `LD && LSB_nex_ava)) begin
                 inst_ID_flag <= `True;
                 inst_ID <= inst_now;
-                inst_pc <= pc;
-                pc <= pc + 4;
+                if(opcode == `J_TYPE) begin // JAL
+                    inst_pc <= pc;
+                    inst_prd_pc <= pc + imm;
+                    pc <= pc + imm;
+                end
+                else begin
+                    inst_pc <= pc;
+                    inst_prd_pc <= pc + 4;
+                    pc <= pc + 4;
+                end
             end
         end
         else inst_ID_flag <= `False;

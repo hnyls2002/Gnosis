@@ -29,12 +29,16 @@ module mem_ctrl(
 
     // lsb done
     output reg                  lsb_done_flag,
-    output reg                  lsb_done_id,
-    output reg [31:0]           lsb_done_val
+
+    // ld cdb 
+    output reg                  ld_cdb_flag,
+    output reg [31:0]           ld_cdb_val,
+    output reg [`ROBBW-1:0]     ld_cdb_rob_id
     );
 
-    reg         last_IF = `False; 
-    reg         last_ld = `False;
+    reg                 last_IF = `False; 
+    reg                 last_ld = `False;
+    reg [`ROBBW-1:0]    last_rob_id = 0;
     reg [1:0]   step_IF = 2'b00;
     reg [1:0]   step_LS = 2'b00;
 
@@ -73,7 +77,9 @@ module mem_ctrl(
 
         if(last_ld) begin
             mem_res[31:24] = mem_din;
-            lsb_done_val = mem_res;
+            ld_cdb_flag = `True;
+            ld_cdb_val = mem_res;
+            ld_cdb_rob_id = last_rob_id;
         end
 
         if(last_IF) begin // next 0, receive 3's result
@@ -100,8 +106,10 @@ module mem_ctrl(
                 || (LSB_width == 2'b10 && step_LS == 2'b11))begin 
                     step_LS <= 2'b00;
                     lsb_done_flag <= `True;
-                    if(LSB_type == 1'b0)
+                    if(LSB_type == 1'b0) begin
                         last_ld <= `True;
+                        last_rob_id <= LSB_rob_id;
+                    end
                 end
             end
             else if(inst_IF_req) begin

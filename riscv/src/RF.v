@@ -6,6 +6,9 @@ module reg_file(
     input  wire    rst,
     input  wire    rdy,
 
+    // jump wrong
+    input  wire    jump_wrong,
+
     // fetch register
     input   wire    [`REGBW-1:0]   rs1,
     input   wire    [`REGBW-1:0]   rs2,
@@ -14,7 +17,7 @@ module reg_file(
     output  reg     [`ROBBW-1:0]   Q1,
     output  reg     [`ROBBW-1:0]   Q2,
 
-    // ROB infos
+    // fetch from ROB
     output  wire [`ROBBW-1:0]   id1, 
     output  wire [`ROBBW-1:0]   id2,
     input   wire                id1_ready,
@@ -69,8 +72,12 @@ always @(*) begin
     end
 end
 
+integer i;
+
 always @(posedge clk) begin
-    if(rst) begin
+    if(rst || jump_wrong) begin
+        for(i = 0; i < `REGSZ; i = i + 1)
+            rob_id [i] <= 0;
     end
     else if(!rdy) begin
     end

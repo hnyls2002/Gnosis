@@ -48,6 +48,9 @@ module reg_file(
 reg [31:0]          reg_val [`REGSZ-1:0];
 reg [`ROBBW-1:0]    rob_id  [`REGSZ-1:0]; // rob_id start from 1
 
+wire [31:0] debug_reg_1_val = reg_val[1];
+wire [`ROBBW-1:0] debug_reg_1_rob_id = rob_id[1];
+
 assign id1 = rob_id[rs1];
 assign id2 = rob_id[rs2];
 
@@ -88,6 +91,10 @@ always @(posedge clk) begin
         end
         if(flag_rename) rob_id[rd_rename] <= id_rename;
     end
+
+    // zero register
+    rob_id[0] <= 0;
+    reg_val[0] <= 0;
 end
 
 endmodule

@@ -7,7 +7,7 @@ module rs_station(
     input  wire    rdy,
 
     // jump wrong
-    output reg                 jump_wrong,
+    input wire                  jump_wrong,
 
     // inst info
     input wire                  inst_ID_flag, 
@@ -31,6 +31,7 @@ module rs_station(
     output reg  [31:0]          exe_RS_A,
     output reg  [31:0]          exe_RS_pc,
     output reg  [5:0]           exe_RS_code,
+    output reg  [`ROBBW-1:0]    exe_RS_rob_id,
 
     // CDB to update
     input wire              ex_cdb_flag,
@@ -123,6 +124,7 @@ always @(posedge clk) begin
             V2          [rs_ava_id] <= inst_ID_V2;
             Q1          [rs_ava_id] <= inst_ID_Q1;
             Q2          [rs_ava_id] <= inst_ID_Q2;
+            // $display("RS insert new  pc = %H : V1 = %d V2 = %d Q1 = %d Q2 = %d",inst_ID_pc, inst_ID_V1, inst_ID_V2, inst_ID_Q1, inst_ID_Q2);
         end
 
         // send to ALU
@@ -134,7 +136,9 @@ always @(posedge clk) begin
             exe_RS_A        <= A[rs_rdy_id];
             exe_RS_pc       <= inst_pc[rs_rdy_id];
             exe_RS_code     <= inst_code[rs_rdy_id];
+            exe_RS_rob_id   <= rob_id[rs_rdy_id];
         end
+        else exe_RS_flag    <= `False;
     end
 end
 

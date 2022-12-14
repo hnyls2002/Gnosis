@@ -80,6 +80,10 @@ wire rob_rdy_flag = head <= tail && rob_rdy[hd];
 assign ROB_nex_ava = rob_rdy_flag || (tail - head + 1 <= `ROBSZ - 2) || (tail - head == `ROBSZ -2 && !inst_ID_flag);
 assign ROB_ava_id = nt;
 
+wire debug_hd_rdy = rob_rdy[hd];
+wire [31:0] debug_hd_val = val[hd];
+wire [`REGBW-1:0] debug_hd_des = des[hd];
+
 always @(posedge clk) begin
     if(rst) begin
     end
@@ -123,6 +127,7 @@ always @(posedge clk) begin
             tail <= tail + 1;
         end
 
+        // commit
         if(rob_rdy_flag) begin
             if(inst_type[hd] == `ALU || inst_type[hd] >= `LD) begin
                 if(inst_type[hd] == `ST) begin
@@ -135,14 +140,24 @@ always @(posedge clk) begin
                     ROB_cmt_rf_flag <= `True;
                     ROB_cmt_rf_des <= des[hd];
                     ROB_cmt_rf_val <= val[hd];
+                    ROB_cmt_rf_rob_id <= hd;
                 end
                 busy[hd] <= `False;
                 rob_rdy[hd] <= `False;
                 head <= head + 1;
             end
             else begin // jump 
-                ROB_cmt_rf_flag <= `False;
-                ROB_cmt_st_flag <= `False;
+                if(inst_type[hd] == `JMP) begin // JAL,JALR
+                    ROB_cmt_st_flag <= `False;
+                    ROB_cmt_rf_flag <= `True;
+                    ROB_cmt_rf_des <= des[hd];
+                    ROB_cmt_rf_val <= val[hd];
+                    ROB_cmt_rf_rob_id <= hd;
+                end
+                else begin
+                    ROB_cmt_rf_flag <= `False;
+                    ROB_cmt_st_flag <= `False;
+                end
                 if(prd_pc[hd] == rel_pc[hd])begin
                     busy[hd] <= `False;
                     rob_rdy[hd] <= `False;
@@ -150,9 +165,13 @@ always @(posedge clk) begin
                 end
                 else begin
                     jump_wrong <= `True;
-                    jump_rel_pc <= prd_pc[hd];
+                    jump_rel_pc <= rel_pc[hd];
                 end
             end
+        end
+        else begin
+            ROB_cmt_rf_flag <= `False;
+            ROB_cmt_st_flag <= `False;
         end
     end
 

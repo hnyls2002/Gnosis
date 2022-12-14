@@ -49,8 +49,8 @@ module cpu(input wire           clk_in,
     wire                MC_LSB_done_flag;
 
     // ROB : jump wrong
-    wire                ROB_jump_wrong;
-    wire [31:0]         ROB_jump_rel_pc;
+    wire                jump_wrong;
+    wire [31:0]         jump_rel_pc;
     // LSB : lsb done
     wire                LSB_clear_done;
 
@@ -171,8 +171,8 @@ module cpu(input wire           clk_in,
         .rdy(rdy_in),
 
         // jump wrong
-        .jump_wrong(ROB_jump_wrong),
-        .jump_rel_pc(ROB_jump_rel_pc),
+        .jump_wrong(jump_wrong),
+        .jump_rel_pc(jump_rel_pc),
 
         // MC
         .inst_MC_flag(MC_IF_flag),
@@ -228,7 +228,7 @@ module cpu(input wire           clk_in,
         .rdy(rdy_in),
 
         // jump wrong
-        .jump_wrong(ROB_jump_wrong),
+        .jump_wrong(jump_wrong),
         .lsb_clear_done(LSB_clear_done),
 
         // inst info
@@ -279,7 +279,7 @@ module cpu(input wire           clk_in,
         .rdy(rdy_in),
 
         // jump wrong
-        .jump_wrong(ROB_jump_wrong),
+        .jump_wrong(jump_wrong),
 
         // inst info
         .inst_ID_flag(ID_flag),
@@ -303,6 +303,7 @@ module cpu(input wire           clk_in,
         .exe_RS_A(RS_ALU_A),
         .exe_RS_pc(RS_ALU_inst_pc),
         .exe_RS_code(RS_ALU_inst_code),
+        .exe_RS_rob_id(RS_ALU_rob_id),
 
         // CDB
         .ex_cdb_flag(ex_cdb_flag),
@@ -319,8 +320,8 @@ module cpu(input wire           clk_in,
         .rdy(rdy_in),
 
         // jump wrong
-        .jump_wrong(ROB_jump_wrong),
-        .jump_rel_pc(ROB_jump_rel_pc),
+        .jump_wrong(jump_wrong),
+        .jump_rel_pc(jump_rel_pc),
         .lsb_clear_done(LSB_clear_done),
 
         // inst info
@@ -374,7 +375,7 @@ module cpu(input wire           clk_in,
         .rdy(rdy_in),
 
         // jump wrong
-        .jump_wrong(ROB_jump_wrong),
+        .jump_wrong(jump_wrong),
 
         // fetch register
         .rs1(ID_rs1),

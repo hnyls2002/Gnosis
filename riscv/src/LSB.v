@@ -84,6 +84,9 @@ always @(*) begin
         else if(inst_type[hd] == `ST && cmt_done[hd]) lsb_rdy_flag = `True;
         else lsb_rdy_flag = `False;
     end
+    else begin
+        lsb_rdy_flag = `False;
+    end
 
     // find store can be knew
     store_can_be_knew = `False;
@@ -106,6 +109,7 @@ always @(posedge clk) begin
     else if(!rdy) begin
     end
     else if(jump_wrong) begin
+        lsb_req_flag <= `False;
         if(!lsb_clear_done) begin
             if(lsb_done_flag) head <= head + 1;
             else if(!lsb_rdy_flag) head <= tail + 1;
@@ -190,6 +194,7 @@ always @(posedge clk) begin
         end
 
         // memory access done, pop head
+        lsb_req_flag <= `False;
         if(lsb_done_flag) begin
             busy[hd] <= `False;
             head <= head + 1;

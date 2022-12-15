@@ -136,6 +136,9 @@ module cpu(input wire           clk_in,
         .rdy(rdy_in),
         .io_buffer_full(io_buffer_full),
 
+        // jump wrong
+        .jump_wrong(jump_wrong),
+
         // ram
         .mem_din(mem_din),
         .mem_dout(mem_dout),

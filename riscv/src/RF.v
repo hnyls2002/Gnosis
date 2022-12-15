@@ -51,6 +51,10 @@ reg [`ROBBW-1:0]    rob_id  [`REGSZ-1:0]; // rob_id start from 1
 wire [31:0] debug_reg_1_val = reg_val[1];
 wire [`ROBBW-1:0] debug_reg_1_rob_id = rob_id[1];
 
+wire [`ROBBW-1:0] debug_reg_0_rob_id = rob_id[0];
+wire [31:0] debug_reg_0_val = reg_val[0];
+
+
 assign id1 = rob_id[rs1];
 assign id2 = rob_id[rs2];
 

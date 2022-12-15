@@ -39,13 +39,13 @@ wire [31:0] inst_now = hit ? cache[pc[`ID]] : inst_MC;
 
 // add to cache
 always @(*) begin
-    if(!hit) begin
-        inst_MC_req = `True;
-        inst_MC_addr = pc;
-    end
-    else begin
+    if(jump_wrong || hit) begin
         inst_MC_req = `False;
         inst_MC_addr = 32'h0;
+    end
+    else begin
+        inst_MC_req = `True;
+        inst_MC_addr = pc;
     end
 end
 
@@ -73,6 +73,9 @@ always @(*) begin
 end
 
 always @(posedge clk) begin
+    // flags init
+    inst_ID_flag <= `False;
+
     if(rst) begin
         valid <= 0;
         pc <= 0;
@@ -99,7 +102,6 @@ always @(posedge clk) begin
                 end
             end
         end
-        else inst_ID_flag <= `False;
     end
 end
 

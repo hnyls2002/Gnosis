@@ -7,6 +7,9 @@ module mem_ctrl(
     input wire			        rdy,
     input wire                  io_buffer_full,
 
+    // jump wrong
+    input wire                  jump_wrong,
+
     // ram
     input wire  [7:0]           mem_din,
     output reg  [7:0]           mem_dout,
@@ -99,7 +102,10 @@ module mem_ctrl(
         lsb_done_flag <= `False;
         ld_cdb_flag <= `False;
 
-        if (rst) begin // reset
+        if (rst || jump_wrong) begin // reset
+            mem_res <= 32'b0;
+            step_IF <= 2'b00;
+            step_LS <= 2'b00;
         end
         else if (!rdy) begin // pause
         end

@@ -145,6 +145,7 @@ always @(posedge clk) begin
                 busy[hd] <= `False;
                 rob_rdy[hd] <= `False;
                 head <= head + 1;
+                // $display("%hx",rel_pc[hd]);
             end
             else begin // jump 
                 if(inst_type[hd] == `JMP) begin // JAL,JALR

@@ -21,7 +21,7 @@ module mem_ctrl(
 
     // LSB
     input wire                  LSB_req,
-    input wire [1:0]            LSB_width, // 0: 1 byte, 1: 2 byte, 2: 4 byte
+    input wire [1:0]            LSB_width, // 0: 1 byte, 1: 2 byte, 3: 4 byte
     input wire                  LSB_type, // 0: load, 1: store
     input wire [31:0]           LSB_addr,
     input wire [31:0]           LSB_val,
@@ -36,27 +36,30 @@ module mem_ctrl(
     output reg [`ROBBW-1:0]     ld_cdb_rob_id
     );
 
-    reg [`ROBBW-1:0]    last_rob_id = 0;
+    // combinational logic
+    wire just_mem_done = lsb_done_flag || inst_IF_flag;
+    assign just_mem_done = lsb_done_flag || inst_IF_flag;
+    reg[1:0] debug_status;
+
+    // sequential logic
+    reg [31:0]  mem_res = 32'b0;
     reg [1:0]   step_IF = 2'b00;
     reg [1:0]   step_LS = 2'b00;
 
-    reg [31:0]  mem_res = 32'b0;
-
-    reg[1:0] debug_status;
-
     // sync with memory interface without delay
     always @(*) begin
-        if(LSB_req && !lsb_done_flag && (!inst_IF_req || step_IF == 0)) begin
+        // register initial
+        mem_dout = 0;
+        mem_a = 0;
+        mem_wr = 0;
+        inst_IF = 0;
+        ld_cdb_val = 0;
+
+        if(LSB_req && !just_mem_done && (!inst_IF_req || step_IF == 0)) begin
             mem_a = LSB_addr + {{30{1'b0}},step_LS};
             if(LSB_type == 1'b0) begin // load
                 debug_status = 2'b1;
                 mem_wr = 1'b0;
-                case (step_LS)
-                    2'b01 : mem_res[7:0] = mem_din;
-                    2'b10 : mem_res[15:8] = mem_din;
-                    2'b11 : mem_res[23:16] = mem_din;
-                    default :;
-                endcase
             end
             else begin // store
                 debug_status = 2'd2;
@@ -69,69 +72,67 @@ module mem_ctrl(
                 endcase
             end
         end
-        else if(inst_IF_req && !inst_IF_flag) begin // req during 0,1,2,3
+        else if(inst_IF_req && !just_mem_done) begin // req during 0,1,2,3
             debug_status = 2'd3;
             mem_wr = 1'b0;
             mem_a = inst_IF_addr + {{30{1'b0}},step_IF};
-            case (step_IF)
-                2'b01 : mem_res[7:0] = mem_din;
-                2'b10 : mem_res[15:8] = mem_din;
-                2'b11 : mem_res[23:16] = mem_din;
-                default :;
-            endcase
         end
-        else begin
-            debug_status = 2'd0;
-            mem_wr = 1'b0;
-        end
+        else debug_status = 2'd0;
 
         if(lsb_done_flag && LSB_type == 1'b0) begin // last is load
             case(LSB_width)
-                2'b00 : begin
-                    mem_res[7:0] = mem_din;
-                    mem_res[31:8] = 0;
-                end
-                2'b01 : begin
-                    mem_res[15:8] = mem_din;
-                    mem_res[31:16] = 0;
-                end
-                2'b10 : mem_res[31:24] = mem_din;
+                2'b00 : ld_cdb_val = {{24{1'b0}},mem_din};
+                2'b01 : ld_cdb_val = {{16{1'b0}},mem_din,mem_res[7:0]};
+                2'b11 : ld_cdb_val = {mem_din,mem_res[23:0]};
                 default:;
             endcase
-            ld_cdb_flag = `True;
-            ld_cdb_val = mem_res;
-            ld_cdb_rob_id = last_rob_id;
         end
 
         if(inst_IF_flag) begin // next 0, receive 3's result
-            mem_res[31:24] = mem_din;
-            inst_IF = mem_res;
+            inst_IF = {mem_din,mem_res[23:0]};
         end
     end
 
     always @(posedge clk) begin
+        // flag initial
+        inst_IF_flag <= `False;
+        lsb_done_flag <= `False;
+        ld_cdb_flag <= `False;
+
         if (rst) begin // reset
         end
         else if (!rdy) begin // pause
         end
         else begin
-            inst_IF_flag <= `False;
-            lsb_done_flag <= `False;
-
-            if(LSB_req && !lsb_done_flag && (!inst_IF_req || step_IF == 0)) begin
+            if(LSB_req && !just_mem_done &&(!inst_IF_req || step_IF == 0)) begin
                 step_LS <= step_LS + 2'b01;
-                if((LSB_width == 2'b0 && step_LS == 2'b0)
-                || (LSB_width == 2'b1 && step_LS == 2'b1)
-                || (LSB_width == 2'b10 && step_LS == 2'b11))begin 
+                if(LSB_width == step_LS)begin
                     step_LS <= 2'b00;
                     lsb_done_flag <= `True;
-                    last_rob_id <= LSB_rob_id;
+                    if(LSB_type == 1'b0)begin
+                        ld_cdb_flag <= `True;
+                        ld_cdb_rob_id <= LSB_rob_id;
+                    end
+                end
+                if(LSB_type == 1'b0)begin
+                    case(step_LS)
+                        2'b01 : mem_res[7:0] <= mem_din;
+                        2'b10 : mem_res[15:8] <= mem_din;
+                        2'b11 : mem_res[23:16] <= mem_din;
+                        default :;
+                    endcase
                 end
             end
-            else if(inst_IF_req && !inst_IF_flag) begin
+            else if(inst_IF_req && !just_mem_done) begin
                 step_IF <= step_IF + 2'b01;
                 if(step_IF == 2'b11)
                     inst_IF_flag <= `True;
+                case(step_IF)
+                    2'b01 : mem_res[7:0] <= mem_din;
+                    2'b10 : mem_res[15:8] <= mem_din;
+                    2'b11 : mem_res[23:16] <= mem_din;
+                    default :;
+                endcase
             end
         end
     end

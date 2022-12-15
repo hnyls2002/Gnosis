@@ -124,7 +124,7 @@ always @(posedge clk) begin
                     case(inst_code[hd])
                         `SB : lsb_req_width <= 2'b00;
                         `SH : lsb_req_width <= 2'b01;
-                        `SW : lsb_req_width <= 2'b10;
+                        `SW : lsb_req_width <= 2'b11;
                         default:;
                     endcase
                 end
@@ -216,12 +216,12 @@ always @(posedge clk) begin
             endcase
             case(inst_code[hd])
                 `LB : lsb_req_width <= 2'b00;
-                `LW : lsb_req_width <= 2'b10;
+                `LW : lsb_req_width <= 2'b11;
                 `LBU : lsb_req_width <= 2'b00; 
                 `LHU : lsb_req_width <= 2'b01;
                 `SB : lsb_req_width <= 2'b00;
                 `SH : lsb_req_width <= 2'b01;
-                `SW : lsb_req_width <= 2'b10;
+                `SW : lsb_req_width <= 2'b11;
                 default:;
             endcase
         end

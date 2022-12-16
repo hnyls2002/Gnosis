@@ -59,6 +59,7 @@ always @(*) begin
         if(rob_id1_rdy) VQ1 = rob_id1_val;
         else if(ex_cdb_flag && rob_id1 == ex_cdb_rob_id) VQ1 = ex_cdb_val;
         else if(ld_cdb_flag && rob_id1 == ld_cdb_rob_id) VQ1 = ld_cdb_val;
+        else if(ROB_cmt_flag && rob_id1 == ROB_cmt_rob_id) VQ1 = ROB_cmt_val;
         else begin
             rs1_rdy = `False;
             VQ1 = rob_id1;
@@ -71,6 +72,7 @@ always @(*) begin
         if(rob_id2_rdy) VQ2 = rob_id2_val;
         else if(ex_cdb_flag && rob_id2 == ex_cdb_rob_id) VQ2 = ex_cdb_val;
         else if(ld_cdb_flag && rob_id2 == ld_cdb_rob_id) VQ2 = ld_cdb_val;
+        else if(ROB_cmt_flag && rob_id2 == ROB_cmt_rob_id) VQ2 = ROB_cmt_val;
         else begin
             rs2_rdy = `False;
             VQ2 = rob_id2;
@@ -79,6 +81,7 @@ always @(*) begin
 end
 
 integer i;
+wire debug_busy_11 = busy[11];
 
 always @(posedge clk) begin
     if(rst) begin

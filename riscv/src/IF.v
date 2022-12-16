@@ -86,6 +86,12 @@ always @(posedge clk) begin
         pc <= jump_rel_pc;
     end
     else begin
+        if(MC_flag) begin
+            valid[pc[`ID]] <= `True;
+            tags[pc[`ID]] <= pc[`TG];
+            cache[pc[`ID]] <= MC_inst;
+        end
+
         if((hit || MC_flag) && ROB_nex_ava) begin
             if((inst_type <= `BRC && RS_nex_ava) 
             || (inst_type >= `LD && LSB_nex_ava)) begin

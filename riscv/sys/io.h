@@ -1,7 +1,7 @@
 #ifndef CPU_JUDGE_TEST_IO_H
 #define CPU_JUDGE_TEST_IO_H
 
-// #define SIM                         // whether in simulation
+#define SIM                         // whether in simulation
 
 #define BYTE_PORT_IN 0x30000        // port for reading bytes from input
 #define BYTE_PORT_OUT 0x30000       // port for writing bytes to output

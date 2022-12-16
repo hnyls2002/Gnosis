@@ -6,14 +6,14 @@ module inst_fetcher(
     input wire  rdy,
 
     // jump wrong
-    input   wire            jump_wrong,
+    input   wire            jump_wrong_stall,
     input   wire    [31:0]  jump_rel_pc,
 
     // MC
-    input   wire            inst_MC_flag,
-    input   wire    [31:0]  inst_MC,
-    output  reg             inst_MC_req,
-    output  reg     [31:0]  inst_MC_addr,
+    input   wire            MC_flag,
+    input   wire    [31:0]  MC_inst,
+    output  reg             MC_req,
+    output  reg     [31:0]  MC_addr,
 
     // stalls
     input   wire            RS_nex_ava,
@@ -21,10 +21,10 @@ module inst_fetcher(
     input   wire            ROB_nex_ava, 
 
     // dispatcher
-    output  reg             inst_ID_flag,
-    output  reg     [31:0]  inst_ID,
-    output  reg     [31:0]  inst_pc,
-    output  reg     [31:0]  inst_prd_pc
+    output  reg             ID_flag,
+    output  reg     [31:0]  ID_inst,
+    output  reg     [31:0]  ID_inst_pc,
+    output  reg     [31:0]  ID_inst_prd_pc
 );
 
 reg [31:0] pc = 0;
@@ -35,17 +35,17 @@ reg [`TGBW-1:0]     tags    [`ICSZ-1:0];
 reg [`ICSZ-1:0]     valid;
 
 wire hit = valid[pc[`ID]] && (tags[pc[`ID]] == pc[`TG]);
-wire [31:0] inst_now = hit ? cache[pc[`ID]] : inst_MC;
+wire [31:0] inst_now = hit ? cache[pc[`ID]] : MC_inst;
 
 // add to cache
 always @(*) begin
-    if(jump_wrong || hit) begin
-        inst_MC_req = `False;
-        inst_MC_addr = 32'h0;
+    if(jump_wrong_stall || hit) begin
+        MC_req = `False;
+        MC_addr = 32'h0;
     end
     else begin
-        inst_MC_req = `True;
-        inst_MC_addr = pc;
+        MC_req = `True;
+        MC_addr = pc;
     end
 end
 
@@ -56,7 +56,7 @@ wire [31:0] imm = {{11{inst_now[31]}},inst_now[31],inst_now[19:12],inst_now[20],
 reg [2:0]   inst_type;
 
 always @(*) begin
-    if(hit || inst_MC_flag) begin
+    if(hit || MC_flag) begin
         case (opcode)
             `R_TYPE     : inst_type = `ALU;
             `I_TYPE0    : inst_type = `JMP; 
@@ -74,7 +74,7 @@ end
 
 always @(posedge clk) begin
     // flags init
-    inst_ID_flag <= `False;
+    ID_flag <= `False;
 
     if(rst) begin
         valid <= 0;
@@ -82,22 +82,23 @@ always @(posedge clk) begin
     end
     else if(!rdy) begin
     end
-    else if (jump_wrong) begin
+    else if (jump_wrong_stall) begin
         pc <= jump_rel_pc;
     end
     else begin
-        if((hit || inst_MC_flag) && ROB_nex_ava) begin
-            if((inst_type <= `BRC && RS_nex_ava) || (inst_type >= `LD && LSB_nex_ava)) begin
-                inst_ID_flag <= `True;
-                inst_ID <= inst_now;
+        if((hit || MC_flag) && ROB_nex_ava) begin
+            if((inst_type <= `BRC && RS_nex_ava) 
+            || (inst_type >= `LD && LSB_nex_ava)) begin
+                ID_flag <= `True;
+                ID_inst <= inst_now;
                 if(opcode == `J_TYPE) begin // JAL
-                    inst_pc <= pc;
-                    inst_prd_pc <= pc + imm;
+                    ID_inst_pc <= pc;
+                    ID_inst_prd_pc <= pc + imm;
                     pc <= pc + imm;
                 end
                 else begin
-                    inst_pc <= pc;
-                    inst_prd_pc <= pc + 4;
+                    ID_inst_pc <= pc;
+                    ID_inst_prd_pc <= pc + 4;
                     pc <= pc + 4;
                 end
             end

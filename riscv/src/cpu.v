@@ -43,13 +43,14 @@ module cpu(input wire           clk_in,
     wire                LSB_MC_type;
     wire [31:0]         LSB_MC_addr;
     wire [31:0]         LSB_MC_val;
-    wire [`ROBBW-1:0]   LSB_MC_rob_id;
+    wire [31:0]         LSB_MC_rob_id;
 
     // MC -> LSB
     wire                MC_LSB_done_flag;
 
     // ROB : jump wrong
-    wire                jump_wrong;
+    wire                jump_wrong_flag;
+    wire                jump_wrong_stall;
     wire [31:0]         jump_rel_pc;
     // LSB : lsb done
     wire                LSB_clear_done;
@@ -65,19 +66,19 @@ module cpu(input wire           clk_in,
 
     // ID ->
     wire                ID_flag;
-    wire [`REGBW-1:0]   ID_rd;
-    wire [`REGBW-1:0]   ID_rs1;
-    wire [`REGBW-1:0]   ID_rs2;
+    wire [4:0]          ID_rd;
+    wire [4:0]          ID_rs1;
+    wire [4:0]          ID_rs2;
     wire [31:0]         ID_A;
-    wire [5:0]          ID_code;
-    wire [2:0]          ID_type;
+    wire [5:0]          ID_inst_code;
+    wire [2:0]          ID_inst_type;
 
     // ID ->
     // get from regfile
-    wire [31:0]         ID_V1;
-    wire [31:0]         ID_V2;
-    wire [`ROBBW-1:0]   ID_Q1;
-    wire [`ROBBW-1:0]   ID_Q2;
+    wire [31:0]         ID_VQ1;
+    wire [31:0]         ID_VQ2;
+    wire                ID_rdy1;
+    wire                ID_rdy2; 
 
     // ID ->
     // get from IF
@@ -86,44 +87,44 @@ module cpu(input wire           clk_in,
 
     // ID -> 
     // get from ROB
-    wire [`ROBBW-1:0]   ID_rob_id;
+    wire [31:0]         ID_rob_id;
 
     // RS -> ALU
-    wire RS_ALU_flag;
+    wire                RS_ALU_flag;
     wire [31:0]         RS_ALU_V1;
     wire [31:0]         RS_ALU_V2;
     wire [31:0]         RS_ALU_A;
     wire [31:0]         RS_ALU_inst_pc;
     wire [5:0]          RS_ALU_inst_code;
-    wire [`ROBBW-1:0]   RS_ALU_rob_id;
+    wire [31:0]         RS_ALU_rob_id;
 
     // ex cdb
     wire                ex_cdb_flag;
     wire [31:0]         ex_cdb_val;
-    wire [`ROBBW-1:0]   ex_cdb_rob_id;
+    wire [31:0]         ex_cdb_rob_id;
     wire [31:0]         ex_cdb_rel_pc;
 
     // ld cdb
     wire                ld_cdb_flag;
     wire [31:0]         ld_cdb_val;
-    wire [`ROBBW-1:0]   ld_cdb_rob_id;
+    wire [31:0]         ld_cdb_rob_id;
 
     // LSB < - > ROB
     // store commit and ready
     wire                ROB_st_cmt_flag;
-    wire [`ROBBW-1:0]   ROB_st_cmt_rob_id;
+    wire [31:0]         ROB_st_cmt_rob_id;
     wire                LSB_st_rdy_flag;
-    wire [`ROBBW-1:0]   LSB_st_rdy_rob_id;
+    wire [31:0]         LSB_st_rdy_rob_id;
 
     // ROB commit to RF
     wire                ROB_rf_cmt_flag;
-    wire [`REGBW-1:0]   ROB_rf_cmt_des;
+    wire [4:0]          ROB_rf_cmt_des;
     wire [31:0]         ROB_rf_cmt_val;
-    wire [`ROBBW-1:0]   ROB_rf_cmt_rob_id;
+    wire [31:0]         ROB_rf_cmt_rob_id;
 
     // RF request reg value in ROB
-    wire [`REGBW-1:0]   RF_id1;
-    wire [`REGBW-1:0]   RF_id2;
+    wire [31:0]         RF_id1;
+    wire [31:0]         RF_id2;
     wire                RF_id1_ready;
     wire                RF_id2_ready;
     wire [31:0]         RF_id1_val;
@@ -137,7 +138,7 @@ module cpu(input wire           clk_in,
         .io_buffer_full(io_buffer_full),
 
         // jump wrong
-        .jump_wrong(jump_wrong),
+        .jump_wrong_flag(jump_wrong_flag),
 
         // ram
         .mem_din(mem_din),
@@ -174,14 +175,14 @@ module cpu(input wire           clk_in,
         .rdy(rdy_in),
 
         // jump wrong
-        .jump_wrong(jump_wrong),
+        .jump_wrong_stall(jump_wrong_stall),
         .jump_rel_pc(jump_rel_pc),
 
         // MC
-        .inst_MC_flag(MC_IF_flag),
-        .inst_MC(MC_IF_inst),
-        .inst_MC_req(IF_MC_req),
-        .inst_MC_addr(IF_MC_addr),
+        .MC_flag(MC_IF_flag),
+        .MC_inst(MC_IF_inst),
+        .MC_req(IF_MC_req),
+        .MC_addr(IF_MC_addr),
 
         // stalls
         .RS_nex_ava(RS_nex_ava),
@@ -189,34 +190,34 @@ module cpu(input wire           clk_in,
         .ROB_nex_ava(ROB_nex_ava),
 
         // dispatcher
-        .inst_ID_flag(IF_ID_flag),
-        .inst_ID(IF_ID_inst),
-        .inst_pc(ID_inst_pc),
-        .inst_prd_pc(ID_inst_prd_pc)
+        .ID_flag(IF_ID_flag),
+        .ID_inst(IF_ID_inst),
+        .ID_inst_pc(ID_inst_pc),
+        .ID_inst_prd_pc(ID_inst_prd_pc)
     );
 
     dispatcher dispatcher0(
-        .inst_flag(IF_ID_flag),
-        .inst(IF_ID_inst),
+        .flag_IF(IF_ID_flag),
+        .inst_IF(IF_ID_inst),
 
         // direct decode infos
-        .inst_ID_flag(ID_flag),
-        .inst_ID_rd(ID_rd),
-        .inst_ID_rs1(ID_rs1),
-        .inst_ID_rs2(ID_rs2),
-        .inst_ID_A(ID_A),
-        .inst_ID_code(ID_code),
-        .inst_ID_type(ID_type)
+        .ID_flag(ID_flag),
+        .ID_rd(ID_rd),
+        .ID_rs1(ID_rs1),
+        .ID_rs2(ID_rs2),
+        .ID_A(ID_A),
+        .ID_inst_code(ID_inst_code),
+        .ID_inst_type(ID_inst_type)
     );
 
     alu alu0(
-        .flag(RS_ALU_flag),
-        .V1(RS_ALU_V1),
-        .V2(RS_ALU_V2),
-        .A(RS_ALU_A),
-        .inst_pc(RS_ALU_inst_pc),
-        .inst_code(RS_ALU_inst_code),
-        .inst_rob_id(RS_ALU_rob_id),
+        .RS_flag(RS_ALU_flag),
+        .RS_V1(RS_ALU_V1),
+        .RS_V2(RS_ALU_V2),
+        .RS_A(RS_ALU_A),
+        .RS_inst_pc(RS_ALU_inst_pc),
+        .RS_inst_code(RS_ALU_inst_code),
+        .RS_inst_rob_id(RS_ALU_rob_id),
 
         // ex cdb
         .ex_cdb_flag(ex_cdb_flag),
@@ -225,24 +226,27 @@ module cpu(input wire           clk_in,
         .ex_cdb_rel_pc(ex_cdb_rel_pc)
     );
 
+    wire [31:0] debug_rdy_st_val;
+    wire [31:0] debug_rdy_st_addr;
+
     ls_buffer ls_buffer0(
         .clk(clk_in),
         .rst(rst_in),
         .rdy(rdy_in),
 
         // jump wrong
-        .jump_wrong(jump_wrong),
+        .jump_wrong_stall(jump_wrong_stall),
         .lsb_clear_done(LSB_clear_done),
 
         // inst info
         .inst_ID_flag(ID_flag),
-        .inst_ID_V1(ID_V1),
-        .inst_ID_V2(ID_V2),
-        .inst_ID_Q1(ID_Q1),
-        .inst_ID_Q2(ID_Q2),
+        .inst_ID_VQ1(ID_VQ1),
+        .inst_ID_VQ2(ID_VQ2),
+        .inst_ID_rdy1(ID_rdy1),
+        .inst_ID_rdy2(ID_rdy2),
         .inst_ID_A(ID_A),
-        .inst_ID_code(ID_code),
-        .inst_ID_type(ID_type),
+        .inst_ID_code(ID_inst_code),
+        .inst_ID_type(ID_inst_type),
         .inst_ID_rob_id(ID_rob_id),
 
         // LSB nex ava
@@ -273,7 +277,9 @@ module cpu(input wire           clk_in,
 
         // pick ready
         .st_rdy_flag(LSB_st_rdy_flag),
-        .st_rdy_rob_id(LSB_st_rdy_rob_id)
+        .st_rdy_rob_id(LSB_st_rdy_rob_id),
+        .debug_st_addr(debug_rdy_st_addr),
+        .debug_st_val(debug_rdy_st_val)
     );
 
     rs_station rs_station0(
@@ -282,17 +288,17 @@ module cpu(input wire           clk_in,
         .rdy(rdy_in),
 
         // jump wrong
-        .jump_wrong(jump_wrong),
+        .jump_wrong_stall(jump_wrong_stall),
 
         // inst info
-        .inst_ID_flag(ID_flag),
-        .inst_ID_V1(ID_V1),
-        .inst_ID_V2(ID_V2),
-        .inst_ID_Q1(ID_Q1),
-        .inst_ID_Q2(ID_Q2),
+        .ID_flag(ID_flag),
+        .inst_ID_VQ1(ID_VQ1),
+        .inst_ID_VQ2(ID_VQ2),
+        .inst_ID_rdy1(ID_rdy1),
+        .inst_ID_rdy2(ID_rdy2),
         .inst_ID_A(ID_A),
-        .inst_ID_code(ID_code),
-        .inst_ID_type(ID_type),
+        .inst_ID_code(ID_inst_code),
+        .inst_ID_type(ID_inst_type),
         .inst_ID_rob_id(ID_rob_id),
         .inst_ID_pc(ID_inst_pc),
 
@@ -300,13 +306,13 @@ module cpu(input wire           clk_in,
         .RS_nex_ava(RS_nex_ava),
         
         // to ALU
-        .exe_RS_flag(RS_ALU_flag),
-        .exe_RS_V1(RS_ALU_V1),
-        .exe_RS_V2(RS_ALU_V2),
-        .exe_RS_A(RS_ALU_A),
-        .exe_RS_pc(RS_ALU_inst_pc),
-        .exe_RS_code(RS_ALU_inst_code),
-        .exe_RS_rob_id(RS_ALU_rob_id),
+        .ALU_flag(RS_ALU_flag),
+        .ALU_V1(RS_ALU_V1),
+        .ALU_V2(RS_ALU_V2),
+        .ALU_A(RS_ALU_A),
+        .ALU_inst_pc(RS_ALU_inst_pc),
+        .ALU_inst_code(RS_ALU_inst_code),
+        .ALU_inst_rob_id(RS_ALU_rob_id),
 
         // CDB
         .ex_cdb_flag(ex_cdb_flag),
@@ -323,16 +329,18 @@ module cpu(input wire           clk_in,
         .rdy(rdy_in),
 
         // jump wrong
-        .jump_wrong(jump_wrong),
+        .jump_wrong_flag(jump_wrong_flag),
+        .jump_wrong_stall(jump_wrong_stall),
         .jump_rel_pc(jump_rel_pc),
         .lsb_clear_done(LSB_clear_done),
 
         // inst info
-        .inst_ID_flag(ID_flag),
-        .inst_ID_code(ID_code),
-        .inst_ID_type(ID_type),
-        .inst_ID_des(ID_rd),
-        .prd_ID_pc(ID_inst_prd_pc),
+        .ID_inst_flag(ID_flag),
+        .ID_inst_code(ID_inst_code),
+        .ID_inst_type(ID_inst_type),
+        .ID_inst_rd(ID_rd),
+        .ID_inst_prd_pc(ID_inst_prd_pc),
+        .debug_inst_pc_in(ID_inst_pc),
 
         // ROB nex ava
         .ROB_nex_ava(ROB_nex_ava),
@@ -349,13 +357,15 @@ module cpu(input wire           clk_in,
         // store rdy
         .st_rdy_flag(LSB_st_rdy_flag),
         .st_rdy_rob_id(LSB_st_rdy_rob_id),
+        .debug_st_rdy_addr(debug_rdy_st_addr),
+        .debug_st_rdy_val(debug_rdy_st_val),
 
         // ava rob id
         .ROB_ava_id(ID_rob_id),
 
         // commit reg
         .ROB_cmt_rf_flag(ROB_rf_cmt_flag),
-        .ROB_cmt_rf_des(ROB_rf_cmt_des),
+        .ROB_cmt_rf_rd(ROB_rf_cmt_des),
         .ROB_cmt_rf_rob_id(ROB_rf_cmt_rob_id),
         .ROB_cmt_rf_val(ROB_rf_cmt_val),
 
@@ -378,34 +388,34 @@ module cpu(input wire           clk_in,
         .rdy(rdy_in),
 
         // jump wrong
-        .jump_wrong(jump_wrong),
+        .jump_wrong_stall(jump_wrong_stall),
 
         // fetch register
         .rs1(ID_rs1),
         .rs2(ID_rs2),
-        .V1(ID_V1),
-        .V2(ID_V2),
-        .Q1(ID_Q1),
-        .Q2(ID_Q2),
+        .VQ1(ID_VQ1),
+        .VQ2(ID_VQ2),
+        .rs1_rdy(ID_rdy1),
+        .rs2_rdy(ID_rdy2),
 
         // fetch from ROB
-        .id1(RF_id1),
-        .id2(RF_id2),
-        .id1_ready(RF_id1_ready),
-        .id2_ready(RF_id2_ready),
-        .id1_val(RF_id1_val),
-        .id2_val(RF_id2_val),
+        .rob_id1(RF_id1),
+        .rob_id2(RF_id2),
+        .rob_id1_rdy(RF_id1_ready),
+        .rob_id2_rdy(RF_id2_ready),
+        .rob_id1_val(RF_id1_val),
+        .rob_id2_val(RF_id2_val),
         
         // ROB commits
-        .flag_ROB(ROB_rf_cmt_flag),
-        .rd_ROB(ROB_rf_cmt_des),
-        .id_ROB(ROB_rf_cmt_rob_id),
-        .val_ROB(ROB_rf_cmt_val),
+        .ROB_cmt_flag(ROB_rf_cmt_flag),
+        .ROB_cmt_rd(ROB_rf_cmt_des),
+        .ROB_cmt_rob_id(ROB_rf_cmt_rob_id),
+        .ROB_cmt_val(ROB_rf_cmt_val),
 
         // instruction rename
-        .flag_rename(ID_flag),
-        .rd_rename(ID_rd),
-        .id_rename(ID_rob_id),
+        .ID_rnm_flag(ID_flag),
+        .ID_rnm_rd(ID_rd),
+        .ID_rnm_rob_id(ID_rob_id),
 
         // cbd 
         .ex_cdb_flag(ex_cdb_flag),

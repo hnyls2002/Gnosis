@@ -4,7 +4,7 @@
 
 // register
 `define REGSZ 32
-`define REGBW 5
+// `define REGBW 5
 
 // cache
 `define ICSZ 256
@@ -22,7 +22,8 @@
 
 // ROB
 `define ROBSZ 32
-`define ROBBW 5
+`define ROBWD 5
+// `define ROBBW 5
 
 // decoder
 `define U_TYPE0 7'b0110111

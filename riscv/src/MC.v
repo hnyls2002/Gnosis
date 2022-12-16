@@ -8,7 +8,7 @@ module mem_ctrl(
     input wire                  io_buffer_full,
 
     // jump wrong
-    input wire                  jump_wrong,
+    input wire                  jump_wrong_flag,
 
     // ram
     input wire  [7:0]           mem_din,
@@ -28,7 +28,7 @@ module mem_ctrl(
     input wire                  LSB_type, // 0: load, 1: store
     input wire [31:0]           LSB_addr,
     input wire [31:0]           LSB_val,
-    input wire [`ROBBW-1:0]     LSB_rob_id,
+    input wire [31:0]           LSB_rob_id,
 
     // lsb done
     output reg                  lsb_done_flag,
@@ -36,7 +36,7 @@ module mem_ctrl(
     // ld cdb 
     output reg                  ld_cdb_flag,
     output reg [31:0]           ld_cdb_val,
-    output reg [`ROBBW-1:0]     ld_cdb_rob_id
+    output reg [31:0]           ld_cdb_rob_id
     );
 
     // combinational logic
@@ -102,7 +102,7 @@ module mem_ctrl(
         lsb_done_flag <= `False;
         ld_cdb_flag <= `False;
 
-        if (rst || jump_wrong) begin // reset
+        if (rst || jump_wrong_flag) begin // reset
             mem_res <= 32'b0;
             step_IF <= 2'b00;
             step_LS <= 2'b00;

@@ -37,6 +37,7 @@ module mem_ctrl(
     output reg                  ld_cdb_flag,
     output reg [31:0]           ld_cdb_val,
     output reg [31:0]           ld_cdb_rob_id
+    // output reg [31:0]           debug_ld_addr_out
     );
 
     // combinational logic
@@ -83,6 +84,7 @@ module mem_ctrl(
         else debug_status = 2'd0;
 
         if(lsb_done_flag && LSB_type == 1'b0) begin // last is load
+            // debug_ld_addr = LSB_addr;
             case(LSB_width)
                 2'b00 : ld_cdb_val = {{24{1'b0}},mem_din};
                 2'b01 : ld_cdb_val = {{16{1'b0}},mem_din,mem_res[7:0]};

@@ -165,6 +165,7 @@ module cpu(input wire           clk_in,
 
         // ld cdb
         .ld_cdb_flag(ld_cdb_flag),
+        // .debug_ld_addr_out(debug_ld_addr_wire),
         .ld_cdb_val(ld_cdb_val),
         .ld_cdb_rob_id(ld_cdb_rob_id)
     );
@@ -228,6 +229,7 @@ module cpu(input wire           clk_in,
 
     wire [31:0] debug_rdy_st_val;
     wire [31:0] debug_rdy_st_addr;
+    // wire [31:0] debug_ld_addr_wire;
 
     ls_buffer ls_buffer0(
         .clk(clk_in),
@@ -353,6 +355,7 @@ module cpu(input wire           clk_in,
         .ld_cdb_flag(ld_cdb_flag),
         .ld_cdb_val(ld_cdb_val),
         .ld_cdb_rob_id(ld_cdb_rob_id),
+        // .debug_ld_addr_in(debug_ld_addr_wire),
 
         // store rdy
         .st_rdy_flag(LSB_st_rdy_flag),

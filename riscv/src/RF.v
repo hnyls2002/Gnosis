@@ -81,7 +81,6 @@ always @(*) begin
 end
 
 integer i;
-wire debug_busy_11 = busy[11];
 
 always @(posedge clk) begin
     if(rst) begin
@@ -99,11 +98,17 @@ always @(posedge clk) begin
     end
     else begin
         // update val
-        if(busy[ROB_cmt_rd] && ROB_cmt_flag &&  rob_id[ROB_cmt_rd] == ROB_cmt_rob_id) begin
-            busy[ROB_cmt_rd] <= `False;
+        if(ROB_cmt_flag) begin
             reg_val[ROB_cmt_rd] <= ROB_cmt_val;
-            rob_id[ROB_cmt_rd] <= 0;
+            if(busy[ROB_cmt_rd] && rob_id[ROB_cmt_rd] == ROB_cmt_rob_id) begin
+                busy[ROB_cmt_rd] <= `False;
+                rob_id[ROB_cmt_rd] <= 0;
+            end
         end
+        // if(busy[ROB_cmt_rd] && ROB_cmt_flag &&  rob_id[ROB_cmt_rd] == ROB_cmt_rob_id) begin
+        //     busy[ROB_cmt_rd] <= `False;
+        //     rob_id[ROB_cmt_rd] <= 0;
+        // end
         
         // issue rename
         if(ID_rnm_flag) begin

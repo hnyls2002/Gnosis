@@ -32,6 +32,7 @@ module reorder_buffer(
     input wire              ld_cdb_flag,
     input wire [31:0]       ld_cdb_rob_id,
     input wire [31:0]       ld_cdb_val,
+    // input wire [31:0]       debug_ld_addr_in,
 
     // store_rdy
     input wire              st_rdy_flag,
@@ -72,8 +73,10 @@ reg [31:0]          rel_pc [`ROBSZ-1:0];
 
 // debug
 reg [31:0]          debug_inst_pc[`ROBSZ-1:0];
-reg [31:0]          debug_st_addr[`ROBSZ-1:0];
+reg [31:0]          debug_ls_addr[`ROBSZ-1:0];
 reg [31:0]          debug_st_val[`ROBSZ-1:0];
+reg [31:0]          debug_ld_addr[`ROBSZ-1:0];
+integer             debug_inst_cnt = 1;
 
 assign RF_id1_ready = rob_rdy[RF_id1[`ROBWD-1:0]];
 assign RF_id2_ready = rob_rdy[RF_id2[`ROBWD-1:0]];
@@ -100,8 +103,8 @@ always @(posedge clk) begin
         jump_wrong_flag <= `False;
         if(lsb_clear_done) begin
             busy <= 0;
-            head <= 1;
-            tail <= 0;
+            head <= head + 1;
+            tail <= head;
             jump_wrong_stall <= `False;
         end
     end
@@ -117,10 +120,11 @@ always @(posedge clk) begin
                 if(ld_cdb_flag && ld_cdb_rob_id[`ROBWD-1:0] == i[`ROBWD-1:0]) begin
                     val[i] <= ld_cdb_val;
                     rob_rdy[i] <= `True;
+                    // debug_ld_addr[i] <= debug_ld_addr_in;
                 end
                 if(st_rdy_flag && st_rdy_rob_id[`ROBWD-1:0] == i[`ROBWD-1:0]) begin
                     rob_rdy[i] <= `True;
-                    debug_st_addr[i] <= debug_st_rdy_addr;
+                    debug_ls_addr[i] <= debug_st_rdy_addr;
                     debug_st_val[i] <= debug_st_rdy_val;
                 end
             end
@@ -140,15 +144,20 @@ always @(posedge clk) begin
 
         // commit
         if(rob_rdy_flag) begin
+            // $display("%0d",debug_inst_cnt);
+            debug_inst_cnt <= debug_inst_cnt + 1;
             if(inst_type[hd] == `ALU || inst_type[hd] >= `LD) begin
                 // $display("%h",debug_inst_pc[hd]);
                 if(inst_type[hd] == `ST) begin
-                    // $display("%h %h",debug_st_val[hd],debug_st_addr[hd]);
+                    // $display("%h %h",debug_st_val[hd],debug_ls_addr[hd]);
                     ROB_cmt_rf_flag <= `False;
                     ROB_cmt_st_flag <= `True;
                     ROB_cmt_st_rob_id <= head;
                 end
                 else begin
+                    /*if(inst_type[hd] == `LD)
+                        $display("%h %h",val[hd],debug_ld_addr[hd]);
+                    else*/
                     // $display("%h",val[hd]);
                     ROB_cmt_st_flag <= `False;
                     ROB_cmt_rf_flag <= `True;

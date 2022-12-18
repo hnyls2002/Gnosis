@@ -209,6 +209,7 @@ always @(posedge clk) begin
             endcase
         end
         else if(jump_wrong_stall) begin
+            busy <= 0;
             head <= tail + 1;
         end
     end

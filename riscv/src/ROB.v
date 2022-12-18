@@ -94,6 +94,15 @@ assign ROB_nex_ava = rob_rdy_flag || (tail - head + 1 <= `ROBSZ - 2) || (tail - 
 
 assign ROB_ava_id = tail + 1;
 
+// `define DEBUG
+
+`ifdef DEBUG 
+    integer debug;
+        initial begin
+            debug=$fopen("debug.out","w");
+        end
+`endif 
+
 always @(posedge clk) begin
     if(rst) begin
     end
@@ -144,12 +153,18 @@ always @(posedge clk) begin
 
         // commit
         if(rob_rdy_flag) begin
-            // $display("%0d",debug_inst_cnt);
+            `ifdef DEBUG 
+                $fdisplay(debug,"%0d",debug_inst_cnt);
+            `endif 
             debug_inst_cnt <= debug_inst_cnt + 1;
             if(inst_type[hd] == `ALU || inst_type[hd] >= `LD) begin
-                // $display("%h",debug_inst_pc[hd]);
+                `ifdef DEBUG 
+                    $fdisplay(debug,"%h",debug_inst_pc[hd]);
+                `endif 
                 if(inst_type[hd] == `ST) begin
-                    // $display("%h %h",debug_st_val[hd],debug_ls_addr[hd]);
+                    `ifdef DEBUG 
+                        $fdisplay(debug,"%h %h",debug_st_val[hd],debug_ls_addr[hd]);
+                    `endif 
                     ROB_cmt_rf_flag <= `False;
                     ROB_cmt_st_flag <= `True;
                     ROB_cmt_st_rob_id <= head;
@@ -158,7 +173,9 @@ always @(posedge clk) begin
                     /*if(inst_type[hd] == `LD)
                         $display("%h %h",val[hd],debug_ld_addr[hd]);
                     else*/
-                    // $display("%h",val[hd]);
+                    `ifdef DEBUG 
+                        $fdisplay(debug,"%h",val[hd]);
+                    `endif 
                     ROB_cmt_st_flag <= `False;
                     ROB_cmt_rf_flag <= `True;
                     ROB_cmt_rf_rd <= rd[hd];
@@ -168,11 +185,12 @@ always @(posedge clk) begin
                 busy[hd] <= `False;
                 rob_rdy[hd] <= `False;
                 head <= head + 1;
-                // $display("%hx",rel_pc[hd]);
             end
             else begin // jump 
-                // $display("%h",debug_inst_pc[hd]);
-                // $display("%h",rel_pc[hd]);
+                `ifdef DEBUG 
+                    $fdisplay(debug,"%h",debug_inst_pc[hd]);
+                    $fdisplay(debug,"%h",rel_pc[hd]);
+                `endif 
                 if(inst_type[hd] == `JMP) begin // JAL,JALR
                     ROB_cmt_st_flag <= `False;
                     ROB_cmt_rf_flag <= `True;
@@ -202,7 +220,6 @@ always @(posedge clk) begin
             ROB_cmt_st_flag <= `False;
         end
     end
-
 end
 
 endmodule

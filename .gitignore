@@ -2,3 +2,4 @@ riscv/testcase/*
 riscv/test/*
 debug*.out
 std.out
+run.out

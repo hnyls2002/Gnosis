@@ -119,7 +119,7 @@ module mem_ctrl(
             step_IF <= 2'b00;
             step_LS <= 2'b00;
         end
-        else if (!rdy) begin // pause
+        else if (!rdy || io_buffer_full) begin // pause
         end
         else begin
             if(LSB_req && !just_mem_done &&(!inst_IF_req || step_IF == 0)) begin

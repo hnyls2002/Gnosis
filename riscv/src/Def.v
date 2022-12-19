@@ -1,5 +1,7 @@
 // `define LOG
 
+`define hci_addr 32'h30000
+
 // bool
 `define True 1'b1
 `define False 1'b0

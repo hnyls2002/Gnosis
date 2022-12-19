@@ -54,7 +54,9 @@ module ls_buffer(
 
     // two register calc done, send to ROB
     output reg                  st_rdy_flag,
-    output reg [31:0]           st_rdy_rob_id
+    output reg [31:0]           st_rdy_rob_id,
+
+    input wire [31:0]           ROB_head
 );
 
 reg [`LSBSZ-1:0]    busy;
@@ -88,7 +90,10 @@ always @(*) begin
     // check the head is ready
     lsb_rdy_flag = `False;
     if(tail >= head) begin
-        if(inst_type[hd] == `LD && rdy1[hd]) lsb_rdy_flag = `True;
+        if(inst_type[hd] == `LD && rdy1[hd])begin
+            if(VQ1[hd] >= `hci_addr) lsb_rdy_flag = ROB_head == inst_rob_id[hd];
+            else lsb_rdy_flag = `True;
+        end
         else if(inst_type[hd] == `ST && cmt_done[hd]) lsb_rdy_flag = `True;
         else lsb_rdy_flag = `False;
     end

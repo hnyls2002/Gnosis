@@ -130,6 +130,10 @@ module cpu(input wire           clk_in,
     wire [31:0]         RF_id1_val;
     wire [31:0]         RF_id2_val;
 
+    // input special judge
+
+    wire [31:0]         ROB_head;
+
     mem_ctrl mem_ctrl0(
         // cpu
         .clk(clk_in),
@@ -284,7 +288,8 @@ module cpu(input wire           clk_in,
 
         // pick ready
         .st_rdy_flag(LSB_st_rdy_flag),
-        .st_rdy_rob_id(LSB_st_rdy_rob_id)
+        .st_rdy_rob_id(LSB_st_rdy_rob_id),
+        .ROB_head(ROB_head)
     );
 
     rs_station rs_station0(
@@ -387,7 +392,8 @@ module cpu(input wire           clk_in,
         .RF_id1_ready(RF_id1_ready),
         .RF_id2_ready(RF_id2_ready),
         .RF_id1_val(RF_id1_val),
-        .RF_id2_val(RF_id2_val)
+        .RF_id2_val(RF_id2_val),
+        .ROB_head(ROB_head)
     );
 
     reg_file reg_file0(

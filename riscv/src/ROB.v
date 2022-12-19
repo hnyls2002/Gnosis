@@ -63,7 +63,10 @@ module reorder_buffer(
     output wire             RF_id1_ready,
     output wire             RF_id2_ready, 
     output wire [31:0]      RF_id1_val,
-    output wire [31:0]      RF_id2_val
+    output wire [31:0]      RF_id2_val,
+
+    // for input : lsb need know the head of ROB
+    output wire [31:0]      ROB_head
 );
 
 reg [`ROBSZ-1:0]    busy;
@@ -99,6 +102,7 @@ wire rob_rdy_flag = head <= tail && rob_rdy[hd];
 assign ROB_nex_ava = rob_rdy_flag || (tail - head + 1 <= `ROBSZ - 2) || (tail - head == `ROBSZ -2 && !ID_inst_flag);
 
 assign ROB_ava_id = tail + 1;
+assign ROB_head = head;
 
 `ifdef LOG
     integer log_file;
@@ -111,6 +115,8 @@ always @(posedge clk) begin
     if(rst) begin
         busy <= 0;
         rob_rdy <= 0;
+        head <= 1;
+        tail <= 0;
     end
     else if(!rdy) begin
     end

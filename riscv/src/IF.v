@@ -13,7 +13,7 @@ module inst_fetcher(
     input   wire            MC_flag,
     input   wire    [31:0]  MC_inst,
     output  reg             MC_req,
-    output  reg     [31:0]  MC_addr,
+    output  wire    [31:0]  MC_addr,
 
     // stalls
     input   wire            RS_nex_ava,
@@ -37,16 +37,13 @@ reg [`ICSZ-1:0]     valid;
 wire hit = valid[pc[`ID]] && (tags[pc[`ID]] == pc[`TG]);
 wire [31:0] inst_now = hit ? cache[pc[`ID]] : MC_inst;
 
-// add to cache
+// assign MC_req = !jump_wrong_stall && !hit;
+assign MC_addr = pc;
+
+// // add to cache
 always @(*) begin
-    if(jump_wrong_stall || hit) begin
-        MC_req = `False;
-        MC_addr = 32'h0;
-    end
-    else begin
-        MC_req = `True;
-        MC_addr = pc;
-    end
+     if(jump_wrong_stall || hit) MC_req = `False;
+     else MC_req = `True;
 end
 
 
@@ -92,6 +89,15 @@ always @(posedge clk) begin
             tags[pc[`ID]] <= pc[`TG];
             cache[pc[`ID]] <= MC_inst;
         end
+
+        // if(jump_wrong_stall || hit) begin
+        //     MC_req <= `False;
+        //     MC_addr <= 32'h0;
+        // end
+        // else begin
+        //     MC_req <= `True;
+        //     MC_addr <= pc;
+        // end
 
         if((hit || MC_flag) && ROB_nex_ava) begin
             if((inst_type <= `BRC && RS_nex_ava) 

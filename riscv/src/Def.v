@@ -15,12 +15,12 @@
 `define TG 31:10
 
 // RS
-`define RSSZ 32
-`define RSBW 5
+`define RSSZ 16
+`define RSBW 4
 
 // LSB
-`define LSBSZ 32
-`define LSBBW 5
+`define LSBSZ 16
+`define LSBBW 4
 
 // ROB
 `define ROBSZ 32

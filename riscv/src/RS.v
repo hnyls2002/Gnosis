@@ -88,6 +88,8 @@ end
 always @(posedge clk) begin
     if(rst || jump_wrong_stall) begin
         busy <= 0;
+        rdy1 <= 0;
+        rdy2 <= 0;
     end
     else if(!rdy) begin
     end

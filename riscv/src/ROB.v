@@ -109,6 +109,8 @@ assign ROB_ava_id = tail + 1;
 
 always @(posedge clk) begin
     if(rst) begin
+        busy <= 0;
+        rob_rdy <= 0;
     end
     else if(!rdy) begin
     end

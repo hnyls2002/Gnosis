@@ -68,6 +68,8 @@ always @(*) begin
     rs_ava_flag = `False;
     rs_rdy_flag = `False;
     rs_ava_2    = `False;
+    rs_rdy_id   = 0;
+    rs_ava_id   = 0;
     for(i = `RSSZ-1; i >= 0; i = i - 1)
         if(!busy[i])begin
             if(rs_ava_flag == `True)

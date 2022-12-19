@@ -56,6 +56,7 @@ wire [31:0] imm = {{11{inst_now[31]}},inst_now[31],inst_now[19:12],inst_now[20],
 reg [2:0]   inst_type;
 
 always @(*) begin
+    inst_type = 0;
     if(hit || MC_flag) begin
         case (opcode)
             `R_TYPE     : inst_type = `ALU;

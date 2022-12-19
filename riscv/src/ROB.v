@@ -14,7 +14,6 @@ module reorder_buffer(
 
     // inst info
     input wire              ID_inst_flag,
-    input wire [5:0]        ID_inst_code,
     input wire [2:0]        ID_inst_type,
     input wire [4:0]        ID_inst_rd,
     input wire [31:0]       ID_inst_prd_pc,
@@ -28,17 +27,17 @@ module reorder_buffer(
 
     // cdb
     input wire              ex_cdb_flag,
-    input wire [31:0]       ex_cdb_rob_id,
+    input wire [`ROBWD-1:0] ex_cdb_rob_id_cut,
     input wire [31:0]       ex_cdb_val,
     input wire [31:0]       ex_cdb_rel_pc,
 
     input wire              ld_cdb_flag,
-    input wire [31:0]       ld_cdb_rob_id,
+    input wire [`ROBWD-1:0] ld_cdb_rob_id_cut,
     input wire [31:0]       ld_cdb_val,
 
     // store_rdy
     input wire              st_rdy_flag,
-    input wire [31:0]       st_rdy_rob_id,
+    input wire [`ROBWD-1:0] st_rdy_rob_id_cut,
 
     `ifdef LOG
         input wire [31:0]       log_st_rdy_val,
@@ -59,8 +58,8 @@ module reorder_buffer(
     output reg [31:0]       ROB_cmt_st_rob_id,
 
     // request reg value
-    input wire  [31:0]      RF_id1,
-    input wire  [31:0]      RF_id2,
+    input wire  [`ROBWD-1:0]RF_id1_cut,
+    input wire  [`ROBWD-1:0]RF_id2_cut,
     output wire             RF_id1_ready,
     output wire             RF_id2_ready, 
     output wire [31:0]      RF_id1_val,
@@ -85,10 +84,10 @@ reg [31:0]          rel_pc [`ROBSZ-1:0];
     integer             log_inst_cnt = 1;
 `endif
 
-assign RF_id1_ready = rob_rdy[RF_id1[`ROBWD-1:0]];
-assign RF_id2_ready = rob_rdy[RF_id2[`ROBWD-1:0]];
-assign RF_id1_val   = val[RF_id1[`ROBWD-1:0]];
-assign RF_id2_val   = val[RF_id2[`ROBWD-1:0]];
+assign RF_id1_ready = rob_rdy[RF_id1_cut];
+assign RF_id2_ready = rob_rdy[RF_id2_cut];
+assign RF_id1_val   = val[RF_id1_cut];
+assign RF_id2_val   = val[RF_id2_cut];
 
 integer i, head = 1, tail = 0;
 wire [`ROBWD-1:0] hd = head[`ROBWD-1:0];
@@ -126,17 +125,17 @@ always @(posedge clk) begin
         // update value and ready
         for(i = 0; i < `ROBSZ; i = i + 1) begin
             if(busy[i]) begin
-                if(ex_cdb_flag && ex_cdb_rob_id[`ROBWD-1:0] == i[`ROBWD-1:0]) begin
+                if(ex_cdb_flag && ex_cdb_rob_id_cut == i[`ROBWD-1:0]) begin
                     val[i] <= ex_cdb_val;
                     rel_pc[i] <= ex_cdb_rel_pc;
                     rob_rdy[i] <= `True;
                 end
-                if(ld_cdb_flag && ld_cdb_rob_id[`ROBWD-1:0] == i[`ROBWD-1:0]) begin
+                if(ld_cdb_flag && ld_cdb_rob_id_cut == i[`ROBWD-1:0]) begin
                     val[i] <= ld_cdb_val;
                     rob_rdy[i] <= `True;
                     // log_ld_addr[i] <= log_ld_addr_in;
                 end
-                if(st_rdy_flag && st_rdy_rob_id[`ROBWD-1:0] == i[`ROBWD-1:0]) begin
+                if(st_rdy_flag && st_rdy_rob_id_cut == i[`ROBWD-1:0]) begin
                     rob_rdy[i] <= `True;
                     `ifdef LOG
                         log_ls_addr[i] <= log_st_rdy_addr;
@@ -150,7 +149,6 @@ always @(posedge clk) begin
         if(ID_inst_flag) begin
             busy[nt] <= `True;
             rob_rdy[nt] <= `False;
-            inst_code[nt] <= ID_inst_code;
             inst_type[nt] <= ID_inst_type;
             rd[nt] <= ID_inst_rd;
             prd_pc[nt] <= ID_inst_prd_pc;

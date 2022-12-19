@@ -95,6 +95,7 @@ always @(*) begin
 
     // find store can be knew
     store_can_be_knew = `False;
+    store_can_be_knew_lsb_id = 0;
     for(i = 0; i < `LSBSZ; i = i + 1) begin
         if(busy[i] && !rob_know_store_rdy[i] && inst_type[i] == `ST && rdy1[i] && rdy2[i]) begin
             store_can_be_knew = `True;

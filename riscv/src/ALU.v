@@ -21,6 +21,8 @@ assign ex_cdb_flag = RS_flag;
 assign ex_cdb_rob_id = RS_inst_rob_id;
 
 always @(*) begin
+    ex_cdb_val  = 0;
+    ex_cdb_rel_pc = 0;
     if(RS_flag) begin
         case(RS_inst_code)
             `ADD    : ex_cdb_val = RS_V1 + RS_V2;

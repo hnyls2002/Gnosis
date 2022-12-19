@@ -45,7 +45,7 @@ module mem_ctrl(
     reg[1:0] log_status;
 
     // sequential logic
-    reg [31:0]  mem_res = 32'b0;
+    reg [23:0]  mem_res = 24'b0;
     reg [1:0]   step_IF = 2'b00;
     reg [1:0]   step_LS = 2'b00;
 
@@ -103,7 +103,7 @@ module mem_ctrl(
         ld_cdb_flag <= `False;
 
         if (rst || jump_wrong_flag) begin // reset
-            mem_res <= 32'b0;
+            mem_res <= 24'b0;
             step_IF <= 2'b00;
             step_LS <= 2'b00;
         end

@@ -341,7 +341,6 @@ module cpu(input wire           clk_in,
 
         // inst info
         .ID_inst_flag(ID_flag),
-        .ID_inst_code(ID_inst_code),
         .ID_inst_type(ID_inst_type),
         .ID_inst_rd(ID_rd),
         .ID_inst_prd_pc(ID_inst_prd_pc),
@@ -355,15 +354,15 @@ module cpu(input wire           clk_in,
         // cdb 
         .ex_cdb_flag(ex_cdb_flag),
         .ex_cdb_val(ex_cdb_val),
-        .ex_cdb_rob_id(ex_cdb_rob_id),
+        .ex_cdb_rob_id_cut(ex_cdb_rob_id[`ROBWD-1:0]),
         .ex_cdb_rel_pc(ex_cdb_rel_pc),
         .ld_cdb_flag(ld_cdb_flag),
         .ld_cdb_val(ld_cdb_val),
-        .ld_cdb_rob_id(ld_cdb_rob_id),
+        .ld_cdb_rob_id_cut(ld_cdb_rob_id[`ROBWD-1:0]),
 
         // store rdy
         .st_rdy_flag(LSB_st_rdy_flag),
-        .st_rdy_rob_id(LSB_st_rdy_rob_id),
+        .st_rdy_rob_id_cut(LSB_st_rdy_rob_id[`ROBWD-1:0]),
         `ifdef LOG
             .log_st_rdy_addr(log_rdy_st_addr),
             .log_st_rdy_val(log_rdy_st_val),
@@ -383,8 +382,8 @@ module cpu(input wire           clk_in,
         .ROB_cmt_st_rob_id(ROB_st_cmt_rob_id),
 
         // request reg file
-        .RF_id1(RF_id1),
-        .RF_id2(RF_id2),
+        .RF_id1_cut(RF_id1[`ROBWD-1:0]),
+        .RF_id2_cut(RF_id2[`ROBWD-1:0]),
         .RF_id1_ready(RF_id1_ready),
         .RF_id2_ready(RF_id2_ready),
         .RF_id1_val(RF_id1_val),

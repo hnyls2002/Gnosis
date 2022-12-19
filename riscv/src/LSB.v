@@ -47,11 +47,14 @@ module ls_buffer(
     input wire                  st_cmt_flag,
     input wire [31:0]           st_cmt_rob_id,
 
+    `ifdef LOG
+        output reg [31:0]           log_st_addr,
+        output reg [31:0]           log_st_val,
+    `endif
+
     // two register calc done, send to ROB
     output reg                  st_rdy_flag,
-    output reg [31:0]           st_rdy_rob_id,
-    output reg [31:0]           debug_st_addr,
-    output reg [31:0]           debug_st_val
+    output reg [31:0]           st_rdy_rob_id
 );
 
 reg [`LSBSZ-1:0]    busy;
@@ -146,8 +149,10 @@ always @(posedge clk) begin
             st_rdy_flag <= `True;
             st_rdy_rob_id <= inst_rob_id[store_can_be_knew_lsb_id];
             rob_know_store_rdy[store_can_be_knew_lsb_id] <= `True;
-            debug_st_addr <= VQ1[store_can_be_knew_lsb_id] + $signed(A[store_can_be_knew_lsb_id]);
-            debug_st_val <= VQ2[store_can_be_knew_lsb_id];
+            `ifdef LOG
+                log_st_addr <= VQ1[store_can_be_knew_lsb_id] + $signed(A[store_can_be_knew_lsb_id]);
+                log_st_val <= VQ2[store_can_be_knew_lsb_id];
+            `endif
         end
         else begin
             st_rdy_flag <= `False;

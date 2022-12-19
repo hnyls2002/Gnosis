@@ -165,7 +165,6 @@ module cpu(input wire           clk_in,
 
         // ld cdb
         .ld_cdb_flag(ld_cdb_flag),
-        // .debug_ld_addr_out(debug_ld_addr_wire),
         .ld_cdb_val(ld_cdb_val),
         .ld_cdb_rob_id(ld_cdb_rob_id)
     );
@@ -227,9 +226,10 @@ module cpu(input wire           clk_in,
         .ex_cdb_rel_pc(ex_cdb_rel_pc)
     );
 
-    wire [31:0] debug_rdy_st_val;
-    wire [31:0] debug_rdy_st_addr;
-    // wire [31:0] debug_ld_addr_wire;
+    `ifdef LOG
+        wire [31:0] log_rdy_st_val;
+        wire [31:0] log_rdy_st_addr;
+    `endif
 
     ls_buffer ls_buffer0(
         .clk(clk_in),
@@ -277,11 +277,14 @@ module cpu(input wire           clk_in,
         .st_cmt_flag(ROB_st_cmt_flag),
         .st_cmt_rob_id(ROB_st_cmt_rob_id),
 
+        `ifdef LOG
+            .log_st_addr(log_rdy_st_addr),
+            .log_st_val(log_rdy_st_val),
+        `endif
+
         // pick ready
         .st_rdy_flag(LSB_st_rdy_flag),
-        .st_rdy_rob_id(LSB_st_rdy_rob_id),
-        .debug_st_addr(debug_rdy_st_addr),
-        .debug_st_val(debug_rdy_st_val)
+        .st_rdy_rob_id(LSB_st_rdy_rob_id)
     );
 
     rs_station rs_station0(
@@ -342,7 +345,9 @@ module cpu(input wire           clk_in,
         .ID_inst_type(ID_inst_type),
         .ID_inst_rd(ID_rd),
         .ID_inst_prd_pc(ID_inst_prd_pc),
-        .debug_inst_pc_in(ID_inst_pc),
+        `ifdef LOG
+            .log_inst_pc_in(ID_inst_pc),
+        `endif
 
         // ROB nex ava
         .ROB_nex_ava(ROB_nex_ava),
@@ -355,13 +360,14 @@ module cpu(input wire           clk_in,
         .ld_cdb_flag(ld_cdb_flag),
         .ld_cdb_val(ld_cdb_val),
         .ld_cdb_rob_id(ld_cdb_rob_id),
-        // .debug_ld_addr_in(debug_ld_addr_wire),
 
         // store rdy
         .st_rdy_flag(LSB_st_rdy_flag),
         .st_rdy_rob_id(LSB_st_rdy_rob_id),
-        .debug_st_rdy_addr(debug_rdy_st_addr),
-        .debug_st_rdy_val(debug_rdy_st_val),
+        `ifdef LOG
+            .log_st_rdy_addr(log_rdy_st_addr),
+            .log_st_rdy_val(log_rdy_st_val),
+        `endif
 
         // ava rob id
         .ROB_ava_id(ID_rob_id),

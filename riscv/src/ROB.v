@@ -18,7 +18,10 @@ module reorder_buffer(
     input wire [2:0]        ID_inst_type,
     input wire [4:0]        ID_inst_rd,
     input wire [31:0]       ID_inst_prd_pc,
-    input wire [31:0]       debug_inst_pc_in,
+
+    `ifdef LOG
+        input wire [31:0]       log_inst_pc_in,
+    `endif
 
     // indicate next
     output wire             ROB_nex_ava,
@@ -32,13 +35,15 @@ module reorder_buffer(
     input wire              ld_cdb_flag,
     input wire [31:0]       ld_cdb_rob_id,
     input wire [31:0]       ld_cdb_val,
-    // input wire [31:0]       debug_ld_addr_in,
 
     // store_rdy
     input wire              st_rdy_flag,
     input wire [31:0]       st_rdy_rob_id,
-    input wire [31:0]       debug_st_rdy_val,
-    input wire [31:0]       debug_st_rdy_addr,
+
+    `ifdef LOG
+        input wire [31:0]       log_st_rdy_val,
+        input wire [31:0]       log_st_rdy_addr,
+    `endif
 
     // tell a available rob_id to ID
     output wire [31:0]      ROB_ava_id,
@@ -71,12 +76,14 @@ reg [4:0]           rd [`ROBSZ-1:0];
 reg [31:0]          prd_pc [`ROBSZ-1:0];
 reg [31:0]          rel_pc [`ROBSZ-1:0];
 
-// debug
-reg [31:0]          debug_inst_pc[`ROBSZ-1:0];
-reg [31:0]          debug_ls_addr[`ROBSZ-1:0];
-reg [31:0]          debug_st_val[`ROBSZ-1:0];
-reg [31:0]          debug_ld_addr[`ROBSZ-1:0];
-integer             debug_inst_cnt = 1;
+`ifdef LOG
+    // log
+    reg [31:0]          log_inst_pc[`ROBSZ-1:0];
+    reg [31:0]          log_ls_addr[`ROBSZ-1:0];
+    reg [31:0]          log_st_val[`ROBSZ-1:0];
+    reg [31:0]          log_ld_addr[`ROBSZ-1:0];
+    integer             log_inst_cnt = 1;
+`endif
 
 assign RF_id1_ready = rob_rdy[RF_id1[`ROBWD-1:0]];
 assign RF_id2_ready = rob_rdy[RF_id2[`ROBWD-1:0]];
@@ -94,12 +101,10 @@ assign ROB_nex_ava = rob_rdy_flag || (tail - head + 1 <= `ROBSZ - 2) || (tail - 
 
 assign ROB_ava_id = tail + 1;
 
-// `define DEBUG
-
-`ifdef DEBUG 
-    integer debug;
+`ifdef LOG
+    integer log_file;
         initial begin
-            debug=$fopen("debug.out","w");
+            log_file=$fopen("debug.out","w");
         end
 `endif 
 
@@ -129,12 +134,14 @@ always @(posedge clk) begin
                 if(ld_cdb_flag && ld_cdb_rob_id[`ROBWD-1:0] == i[`ROBWD-1:0]) begin
                     val[i] <= ld_cdb_val;
                     rob_rdy[i] <= `True;
-                    // debug_ld_addr[i] <= debug_ld_addr_in;
+                    // log_ld_addr[i] <= log_ld_addr_in;
                 end
                 if(st_rdy_flag && st_rdy_rob_id[`ROBWD-1:0] == i[`ROBWD-1:0]) begin
                     rob_rdy[i] <= `True;
-                    debug_ls_addr[i] <= debug_st_rdy_addr;
-                    debug_st_val[i] <= debug_st_rdy_val;
+                    `ifdef LOG
+                        log_ls_addr[i] <= log_st_rdy_addr;
+                        log_st_val[i] <= log_st_rdy_val;
+                    `endif
                 end
             end
         end
@@ -147,23 +154,25 @@ always @(posedge clk) begin
             inst_type[nt] <= ID_inst_type;
             rd[nt] <= ID_inst_rd;
             prd_pc[nt] <= ID_inst_prd_pc;
-            debug_inst_pc[nt] <= debug_inst_pc_in;
+            `ifdef LOG
+                log_inst_pc[nt] <= log_inst_pc_in;
+            `endif
             tail <= tail + 1;
         end
 
         // commit
         if(rob_rdy_flag) begin
-            `ifdef DEBUG 
-                $fdisplay(debug,"%0d",debug_inst_cnt);
+            `ifdef LOG
+                $fdisplay(log_file,"%0d",log_inst_cnt);
+                log_inst_cnt <= log_inst_cnt + 1;
             `endif 
-            debug_inst_cnt <= debug_inst_cnt + 1;
             if(inst_type[hd] == `ALU || inst_type[hd] >= `LD) begin
-                `ifdef DEBUG 
-                    $fdisplay(debug,"%h",debug_inst_pc[hd]);
+                `ifdef LOG
+                    $fdisplay(log_file,"%h",log_inst_pc[hd]);
                 `endif 
                 if(inst_type[hd] == `ST) begin
-                    `ifdef DEBUG 
-                        $fdisplay(debug,"%h %h",debug_st_val[hd],debug_ls_addr[hd]);
+                    `ifdef LOG
+                        $fdisplay(log_file,"%h %h",log_st_val[hd],log_ls_addr[hd]);
                     `endif 
                     ROB_cmt_rf_flag <= `False;
                     ROB_cmt_st_flag <= `True;
@@ -171,10 +180,10 @@ always @(posedge clk) begin
                 end
                 else begin
                     /*if(inst_type[hd] == `LD)
-                        $display("%h %h",val[hd],debug_ld_addr[hd]);
+                        $display("%h %h",val[hd],log_ld_addr[hd]);
                     else*/
-                    `ifdef DEBUG 
-                        $fdisplay(debug,"%h",val[hd]);
+                    `ifdef LOG
+                        $fdisplay(log_file,"%h",val[hd]);
                     `endif 
                     ROB_cmt_st_flag <= `False;
                     ROB_cmt_rf_flag <= `True;
@@ -187,9 +196,9 @@ always @(posedge clk) begin
                 head <= head + 1;
             end
             else begin // jump 
-                `ifdef DEBUG 
-                    $fdisplay(debug,"%h",debug_inst_pc[hd]);
-                    $fdisplay(debug,"%h",rel_pc[hd]);
+                `ifdef LOG
+                    $fdisplay(log_file,"%h",log_inst_pc[hd]);
+                    $fdisplay(log_file,"%h",rel_pc[hd]);
                 `endif 
                 if(inst_type[hd] == `JMP) begin // JAL,JALR
                     ROB_cmt_st_flag <= `False;

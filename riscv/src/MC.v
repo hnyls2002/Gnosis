@@ -37,13 +37,12 @@ module mem_ctrl(
     output reg                  ld_cdb_flag,
     output reg [31:0]           ld_cdb_val,
     output reg [31:0]           ld_cdb_rob_id
-    // output reg [31:0]           debug_ld_addr_out
     );
 
     // combinational logic
     wire just_mem_done = lsb_done_flag || inst_IF_flag;
     assign just_mem_done = lsb_done_flag || inst_IF_flag;
-    reg[1:0] debug_status;
+    reg[1:0] log_status;
 
     // sequential logic
     reg [31:0]  mem_res = 32'b0;
@@ -62,11 +61,11 @@ module mem_ctrl(
         if(LSB_req && !just_mem_done && (!inst_IF_req || step_IF == 0)) begin
             mem_a = LSB_addr + {{30{1'b0}},step_LS};
             if(LSB_type == 1'b0) begin // load
-                debug_status = 2'b1;
+                log_status = 2'b1;
                 mem_wr = 1'b0;
             end
             else begin // store
-                debug_status = 2'd2;
+                log_status = 2'd2;
                 mem_wr = 1'b1;
                 case (step_LS)
                     2'b00 : mem_dout = LSB_val[7:0];
@@ -77,14 +76,13 @@ module mem_ctrl(
             end
         end
         else if(inst_IF_req && !just_mem_done) begin // req during 0,1,2,3
-            debug_status = 2'd3;
+            log_status = 2'd3;
             mem_wr = 1'b0;
             mem_a = inst_IF_addr + {{30{1'b0}},step_IF};
         end
-        else debug_status = 2'd0;
+        else log_status = 2'd0;
 
         if(lsb_done_flag && LSB_type == 1'b0) begin // last is load
-            // debug_ld_addr = LSB_addr;
             case(LSB_width)
                 2'b00 : ld_cdb_val = {{24{1'b0}},mem_din};
                 2'b01 : ld_cdb_val = {{16{1'b0}},mem_din,mem_res[7:0]};

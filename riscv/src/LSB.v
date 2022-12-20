@@ -62,16 +62,17 @@ module ls_buffer(
 reg [`LSBSZ-1:0]    busy;
 reg [`LSBSZ-1:0]    cmt_done;
 reg [`LSBSZ-1:0]    rob_know_store_rdy; // if ture, then ROB knows this store is ready
+reg [`LSBSZ-1:0]    rdy1 ;
+reg [`LSBSZ-1:0]    rdy2 ;
 reg [5:0]           inst_code [`LSBSZ-1:0];
 reg [2:0]           inst_type [`LSBSZ-1:0];
 reg [31:0]          inst_rob_id [`LSBSZ-1:0];
 reg [31:0]          VQ1 [`LSBSZ-1:0];
 reg [31:0]          VQ2 [`LSBSZ-1:0];
-reg                 rdy1 [`LSBSZ-1:0];
-reg                 rdy2 [`LSBSZ-1:0];
 reg [31:0]          A[`LSBSZ-1:0];
 
 integer i,head = 1, tail = 0;
+wire [31:0] busy_cnt = head <= tail + 1 ? tail - head + 1 : `LSBSZ - head + tail + 1;
 wire [`LSBBW-1:0] hd = head[`LSBBW-1:0];
 wire [`LSBBW-1:0] tl = tail[`LSBBW-1:0];
 wire [`LSBBW-1:0] nt = tl + 1;
@@ -79,17 +80,19 @@ wire [`LSBBW-1:0] nt = tl + 1;
 reg lsb_rdy_flag;
 
 wire issue_LSB_flag = inst_ID_flag && inst_ID_type >= `LD;
-assign LSB_nex_ava = lsb_done_flag || (tail - head + 1 <= `LSBSZ - 2) || (tail - head == `LSBSZ -2  && !issue_LSB_flag);
+assign LSB_nex_ava = lsb_done_flag || (busy_cnt <= `LSBSZ - 3) || (busy_cnt == `LSBSZ -2  && !issue_LSB_flag);
 
 reg                 store_can_be_knew;
 reg [`LSBBW-1:0]    store_can_be_knew_lsb_id;
 
-assign lsb_clear_done = head == tail + 1;
+assign lsb_clear_done = busy_cnt == 0;
 
 always @(*) begin
     // check the head is ready
     lsb_rdy_flag = `False;
-    if(tail >= head) begin
+    store_can_be_knew = `False;
+    store_can_be_knew_lsb_id = 0;
+    if(busy_cnt > 0) begin
         if(inst_type[hd] == `LD && rdy1[hd])begin
             if(VQ1[hd] >= `hci_addr) lsb_rdy_flag = ROB_head == inst_rob_id[hd];
             else lsb_rdy_flag = `True;
@@ -99,8 +102,6 @@ always @(*) begin
     end
 
     // find store can be knew
-    store_can_be_knew = `False;
-    store_can_be_knew_lsb_id = 0;
     for(i = 0; i < `LSBSZ; i = i + 1) begin
         if(busy[i] && !rob_know_store_rdy[i] && inst_type[i] == `ST && rdy1[i] && rdy2[i]) begin
             store_can_be_knew = `True;
@@ -111,12 +112,21 @@ end
 
 always @(posedge clk) begin
     lsb_req_flag <= `False;
+    lsb_req_width <= 0;
+    lsb_req_type <= 0;
+    lsb_req_addr <= 0;
+    lsb_req_data <= 0;
+    lsb_req_rob_id <= 0;
+
     st_rdy_flag <= `False;
+    st_rdy_rob_id <= 0;
 
     if(rst) begin
         busy <= 0;
         cmt_done <= 0;
         rob_know_store_rdy <= 0;
+        rdy1 <= 0;
+        rdy2 <= 0;
         head <= 1;
         tail <= 0;
     end

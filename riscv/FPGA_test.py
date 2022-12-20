@@ -4,7 +4,7 @@ import sys
 isWin = sys.platform[:3] == 'win'
 wslPrefix = 'ubuntu.exe run ' if isWin else ''
 
-test_cases_dir = './testcase'
+test_cases_dir = './testcase/fpga'
 path_of_bit = 'C:/a.bit' # A Windows-style path is ok if you runs on Windows
 excluded_test_cases = []
 
@@ -24,10 +24,13 @@ def collect_test_cases():
     for s in excluded_test_cases:
         if s in test_cases: test_cases.remove(s)
     test_cases.sort()
-    return test_cases
+    ret = []
+    for s in test_cases:
+        ret.append("fpga/" + s)
+    return ret
 
 def main():
-    program_device()
+    # program_device()
     test_cases = collect_test_cases()
 
     print('Build controller...')
@@ -37,6 +40,8 @@ def main():
     print(color_green + 'Success' + color_none)
 
     for t in test_cases:
+        if t == "fpga/heart" : 
+            continue
         print('Testing ' + t + ': ')
         if os.system(wslPrefix + './autorun_fpga.sh ' + t): 
             print(color_red + 'Test Failed' + color_none)

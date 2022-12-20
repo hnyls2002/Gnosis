@@ -93,13 +93,14 @@ assign RF_id1_val   = val[RF_id1_cut];
 assign RF_id2_val   = val[RF_id2_cut];
 
 integer i, head = 1, tail = 0;
+wire [31:0] busy_cnt = head <= tail + 1 ? tail - head + 1 : `ROBSZ - head + tail + 1;
 wire [`ROBWD-1:0] hd = head[`ROBWD-1:0];
 wire [`ROBWD-1:0] tl = tail[`ROBWD-1:0];
 wire [`ROBWD-1:0] nt = tl + 1;
 
-wire rob_rdy_flag = head <= tail && rob_rdy[hd];
+wire rob_rdy_flag = busy_cnt > 0 && rob_rdy[hd];
 
-assign ROB_nex_ava = rob_rdy_flag || (tail - head + 1 <= `ROBSZ - 2) || (tail - head == `ROBSZ -2 && !ID_inst_flag);
+assign ROB_nex_ava = rob_rdy_flag || (busy_cnt <= `ROBSZ - 3) || (busy_cnt == `ROBSZ - 2 && !ID_inst_flag);
 
 assign ROB_ava_id = tail + 1;
 assign ROB_head = head;

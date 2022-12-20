@@ -73,6 +73,9 @@ end
 always @(posedge clk) begin
     // flags init
     ID_flag <= `False;
+    ID_inst <= 32'h0;
+    ID_inst_pc <= 32'h0;
+    ID_inst_prd_pc <= 32'h0;
 
     if(rst) begin
         valid <= 0;

@@ -3,3 +3,4 @@ riscv/test/*
 debug*.out
 std.out
 run.out
+diff.out

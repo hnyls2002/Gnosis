@@ -117,6 +117,9 @@ always @(posedge clk) begin
         rob_rdy <= 0;
         head <= 1;
         tail <= 0;
+        jump_wrong_stall <= `False;
+        jump_wrong_flag <= `False;
+        jump_rel_pc <= 0;
     end
     else if(!rdy) begin
     end

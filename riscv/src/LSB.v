@@ -166,7 +166,7 @@ always @(posedge clk) begin
         end
 
         // push inst
-        if(issue_LSB_flag) begin
+        if(issue_LSB_flag && !jump_wrong_stall) begin
             busy[nt] <= `True;
             cmt_done[nt] <= `False;
             rob_know_store_rdy[nt] <= `False;
